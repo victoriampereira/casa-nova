@@ -197,7 +197,7 @@ input,select,textarea{font-size:16px}
       <div class="summary" id="summary"></div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span id="who"></span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 3</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -671,7 +671,7 @@ current = ROOMS.some(r=>r.id===start) ? start : null;
 sb.auth.onAuthStateChange((_ev, s)=>{ setSession(s); });
 sb.auth.getSession().then(({data})=>{ setSession(data.session); if (!data.session) render(); });
 document.addEventListener("visibilitychange", ()=>{ if (!document.hidden) reloadSoon(); });
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js", {updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});
 </script>
 </body>
 </html>
