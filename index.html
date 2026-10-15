@@ -107,6 +107,13 @@ li.item{border-bottom:1px solid var(--line)}
 .plus:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .shop{display:flex;flex-direction:column;gap:14px;padding:0 2px 14px 40px}
 li.item > .opts{padding:0 2px 16px 40px}
+.shopfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.switch{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:10px;font-size:.88rem;color:var(--ink)}
+.switch .knob{width:38px;height:22px;border-radius:999px;background:var(--line);position:relative;transition:background .2s;flex:none}
+.switch .knob::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .2s}
+.switch[aria-checked="true"] .knob{background:var(--accent)}
+.switch[aria-checked="true"] .knob::after{transform:translateX(16px)}
+.switch:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
 .opts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
 .opt{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px 14px;align-items:start;background:var(--surface);
@@ -244,7 +251,7 @@ input,select,textarea{font-size:16px}
       </div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 6</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 7</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -383,11 +390,16 @@ const safeUrl = u => /^https?:\/\//i.test(u||"") ? u : "";
 const PH = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>';
 
 function shopPanel(i){
+  const ess = i.priority === "essencial";
   return `<div class="shop">
     <form class="optform" data-optform="${i.id}" autocomplete="off">
-      <input id="o-link-${i.id}" name="link" type="url" inputmode="url" placeholder="Cole aqui o link do produto" required aria-label="Link do produto">
+      <input id="o-link-${i.id}" name="link" type="url" inputmode="url" placeholder="Cole aqui o link do produto" aria-label="Link do produto">
       <button class="btn" type="submit">Adicionar</button>
     </form>
+    <div class="shopfoot">
+      <button type="button" class="switch" role="switch" aria-checked="${ess}" data-essencial="${i.id}"><span class="knob"></span>Essencial</button>
+      <button type="button" class="lnk muted" data-del="${i.id}">Remover item</button>
+    </div>
   </div>`;
 }
 
@@ -428,7 +440,7 @@ function itemRow(i){
   return `<li class="item ${i.done?"done":""}" data-id="${i.id}">
     <div class="row">
       <input type="checkbox" class="check" id="c-${i.id}" ${i.done?"checked":""} aria-label="Marcar ${esc(i.name)} como comprado">
-      <button type="button" class="iname" data-edit="${i.id}" aria-expanded="${open}">
+      <button type="button" class="iname" data-edit="${i.id}" aria-expanded="${shop}">
         ${i.priority==="essencial" ? '<span class="tag">Essencial</span>' : ''}
         <span class="t">${esc(i.name)}</span>
         ${sub ? `<span class="s">${sub}</span>` : ""}
@@ -438,19 +450,6 @@ function itemRow(i){
     </div>
     ${shop ? shopPanel(i) : ""}
     ${nOpts ? `<ul class="opts">${i.options.map(o=>optCard(i,o)).join("")}</ul>` : ""}
-    ${open ? `<form class="edit" data-form="${i.id}">
-      <label class="full">Item<input id="e-name-${i.id}" name="name" value="${esc(i.name)}" required></label>
-      <label>Preço estimado<input id="e-price-${i.id}" name="price" inputmode="decimal" class="num" value="${i.price!=null?String(i.price).replace(".",","):""}" placeholder="R$ 0,00"></label>
-      <label>Prioridade<select id="e-pri-${i.id}" name="priority">
-        <option value="essencial" ${i.priority==="essencial"?"selected":""}>Essencial</option>
-        <option value="depois" ${i.priority!=="essencial"?"selected":""}>Pode esperar</option></select></label>
-      <label class="full">Observação (medida, cor, loja)<textarea id="e-note-${i.id}" name="note">${esc(i.note)}</textarea></label>
-      <label class="full">Link do produto<input id="e-link-${i.id}" name="link" type="url" value="${esc(i.link)}" placeholder="https://"></label>
-      ${i.link ? `<a class="link full" href="${esc(i.link)}" target="_blank" rel="noopener">Abrir link ↗</a>` : ""}
-      <div class="actions"><button class="btn" type="submit">Salvar</button>
-        <button class="btn ghost" type="button" data-cancel>Fechar</button><span class="spacer"></span>
-        <button class="btn danger" type="button" data-del="${i.id}">Remover</button></div>
-    </form>` : ""}
   </li>`;
 }
 
@@ -546,8 +545,11 @@ $("lists").addEventListener("click", e=>{
       if(s.chosenId===oid){ const n = s.options[0]; s.chosenId = n ? n.id : null; s.price = n ? (n.price ?? null) : null; s.link = n ? n.link : ""; }
       return s; }); return; }
   const ed = e.target.closest("[data-edit]");
-  if (ed){ openEdit = openEdit===ed.dataset.edit ? null : ed.dataset.edit; openShop=null; renderDetail();
-    if(openEdit){ const f=document.querySelector(`[data-form="${openEdit}"] input`); f && f.focus(); } return; }
+  if (ed){ openShop = openShop===ed.dataset.edit ? null : ed.dataset.edit; openOpt=null; renderDetail(); return; }
+  const es = e.target.closest("[data-essencial]");
+  if (es){ const id = es.dataset.essencial, it = items.find(i=>i.id===id); if(!it) return;
+    const priority = it.priority === "essencial" ? "depois" : "essencial";
+    write(()=>col.doc(id).update({priority}), ()=>{ it.priority = priority; }); return; }
   if (e.target.closest("[data-cancel]")){ openEdit=null; renderDetail(); return; }
   const del = e.target.closest("[data-del]");
   if (del){
@@ -571,7 +573,7 @@ $("lists").addEventListener("submit", e=>{
   const of = e.target.closest("[data-optform]");
   if (of){ e.preventDefault();
     const id = of.dataset.optform, raw = String(new FormData(of).get("link")||"").trim();
-    const m = raw.match(/https?:\/\/\S+/); if(!m) return;
+    const m = raw.match(/https?:\/\/\S+/); if(!m){ if(!raw){ openShop=null; renderDetail(); } return; }
     const link = cleanLink(m[0]), title = nameFromLink(link);
     const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title || "Produto", price:null, priceNote:"", photo:"", link, pending:true, addedAt:Date.now()};
     openShop = null;
