@@ -177,6 +177,41 @@ input,select,textarea{font-size:16px}
   .row{gap:10px}
   .room{min-height:170px;padding:16px}
 }
+.dgrid{display:flex;flex-direction:column;gap:22px}
+.dside{display:flex;flex-direction:column;gap:22px;min-width:0}
+.roomnav{display:none}
+.hometop{display:flex;flex-direction:column;gap:22px}
+
+/* Computador: paisagem, ocupa a tela toda */
+@media (min-width:1024px){
+  .wrap{max-width:1560px;padding-block:40px 64px}
+  .hometop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:48px;align-items:end}
+  .hometop .summary{border-top:0;padding-top:0}
+  .hometop h1{font-size:clamp(3rem,4.6vw,4.4rem)}
+  .rooms{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+  .room{min-height:clamp(260px,calc(100vh - 420px),520px);padding:28px}
+  .room svg{width:56px;height:56px}
+  .room .name{font-size:1.6rem}
+
+  .dgrid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:48px;align-items:start}
+  .dside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);max-height:calc(100vh - 48px);overflow:auto;padding-bottom:8px}
+  form.add{grid-template-columns:minmax(0,1fr) 110px}
+  form.add .btn{grid-column:1/-1}
+  .roomnav{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+  .roomnav button{all:unset;cursor:pointer;display:flex;justify-content:space-between;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);font-size:.92rem;color:var(--muted)}
+  .roomnav button:hover{color:var(--ink)}
+  .roomnav button[aria-current="true"]{color:var(--ink);font-weight:600}
+  .roomnav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  ul.items{border-top:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px;align-items:start}
+  li.item{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:6px 16px 4px}
+  li.item > .opts, .shop, .edit{padding-left:0}
+  .opt{grid-template-columns:96px minmax(0,1fr);background:var(--bg)}
+  .thumb{width:96px;height:96px}
+  .group h3{margin-bottom:10px}
+}
+@media (min-width:1600px){ ul.items{grid-template-columns:repeat(3,minmax(0,1fr))} }
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -200,19 +235,22 @@ input,select,textarea{font-size:16px}
 
   <section id="home" hidden>
     <div style="display:flex;flex-direction:column;gap:22px">
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <span class="eyebrow">Planejamento do apartamento</span>
-        <h1>Casa Nova da Vi</h1>
+      <div class="hometop">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span class="eyebrow">Planejamento do apartamento</span>
+          <h1>Casa Nova da Vi</h1>
+        </div>
+        <div class="summary" id="summary"></div>
       </div>
-      <div class="summary" id="summary"></div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 5</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 6</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
   <section id="detail" hidden>
-    <div style="display:flex;flex-direction:column;gap:22px">
+    <div class="dgrid">
+     <aside class="dside">
       <button class="back" id="back" type="button">← Todos os cômodos</button>
       <div class="dhead">
         <span class="eyebrow" id="dEyebrow"></span>
@@ -230,7 +268,9 @@ input,select,textarea{font-size:16px}
         <button class="chip" type="button" data-f="essencial" aria-pressed="false">Essenciais</button>
         <button class="chip" type="button" data-f="depois" aria-pressed="false">Pode esperar</button>
       </div>
-      <div id="lists" style="display:flex;flex-direction:column;gap:26px"></div>
+      <nav class="roomnav" id="roomnav" aria-label="Cômodos"></nav>
+     </aside>
+      <div id="lists" style="display:flex;flex-direction:column;gap:26px;min-width:0"></div>
     </div>
   </section>
 </div>
@@ -420,6 +460,8 @@ function renderDetail(){
   const st = stats(all);
   $("dEyebrow").textContent = `${ROOMS.indexOf(r)+1} de ${ROOMS.length} cômodos`;
   $("dTitle").textContent = r.name;
+  $("roomnav").innerHTML = ROOMS.map(x=>{ const st = stats(items.filter(i=>i.room===x.id));
+    return `<button type="button" data-room="${x.id}" aria-current="${x.id===r.id}"><span>${x.name}</span><span class="num">${st.done}/${st.count}</span></button>`; }).join("");
   $("dStats").innerHTML = `<span><b class="num">${st.done}/${st.count}</b> comprados</span>
     <span>Estimado <b class="num">${fmt(st.total)}</b></span><span>Falta <b class="num">${fmt(st.left)}</b></span>`;
   $("dBar").style.width = (st.count ? st.done/st.count*100 : 0) + "%";
@@ -460,6 +502,7 @@ function alertMsg(t){ $("status").textContent = t; if (current){ const l=$("list
 
 $("rooms").addEventListener("click", e=>{ const b = e.target.closest("[data-room]"); if(b) go(b.dataset.room); });
 $("back").addEventListener("click", ()=>go(null));
+$("roomnav").addEventListener("click", e=>{ const b = e.target.closest("[data-room]"); if(b) go(b.dataset.room); });
 $("filters").addEventListener("click", e=>{ const c=e.target.closest("[data-f]"); if(!c) return; filter=c.dataset.f; renderDetail(); });
 
 $("addForm").addEventListener("submit", e=>{
