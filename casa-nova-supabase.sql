@@ -45,3 +45,20 @@ create policy "fotos: dono envia" on storage.objects for insert to authenticated
   with check (bucket_id = 'fotos' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "fotos: dono apaga" on storage.objects for delete to authenticated
   using (bucket_id = 'fotos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Orçamento editável (um registro por pessoa)
+create table if not exists public.settings (
+  user_id uuid primary key default auth.uid() references auth.users(id) on delete cascade,
+  budget numeric not null default 15000,
+  updated_at timestamptz not null default now()
+);
+alter table public.settings enable row level security;
+drop policy if exists "config: dono le" on public.settings;
+drop policy if exists "config: dono cria" on public.settings;
+drop policy if exists "config: dono altera" on public.settings;
+create policy "config: dono le" on public.settings for select using (auth.uid() = user_id);
+create policy "config: dono cria" on public.settings for insert with check (auth.uid() = user_id);
+create policy "config: dono altera" on public.settings for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+do $$ begin
+  alter publication supabase_realtime add table public.settings;
+exception when duplicate_object then null; end $$;

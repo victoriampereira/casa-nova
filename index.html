@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Casa Nova</title>
+<title>Casa Nova da Vi</title>
 <meta name="theme-color" content="#f5f5f1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#161714" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Casa Nova">
+<meta name="apple-mobile-web-app-title" content="Casa Nova da Vi">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -46,10 +46,20 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* summary */
-.summary{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:baseline;border-top:1px solid var(--line);padding-top:16px}
-.summary div{display:flex;flex-direction:column}
-.summary strong{font-family:var(--display);font-weight:400;font-size:1.5rem}
-.summary span{font-size:.8rem;color:var(--muted)}
+.summary{display:flex;flex-direction:column;gap:16px;border-top:1px solid var(--line);padding-top:16px}
+.budget{display:flex;flex-direction:column;gap:6px}
+.budget .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:600}
+.budget-btn{all:unset;cursor:pointer;display:inline-flex;align-items:baseline;gap:10px;font-family:var(--display);font-size:clamp(2rem,9vw,2.6rem);line-height:1.1}
+.budget-btn small{font-family:var(--body);font-size:.78rem;color:var(--accent);font-weight:600}
+.budget-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+form.budget-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+form.budget-form input{border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:10px 12px;font-size:16px;width:12ch;min-width:0}
+.stats{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:baseline}
+.stats div{display:flex;flex-direction:column}
+.over{color:var(--danger)!important}
+.bar i.over-bar{background:var(--danger)}
+.stats strong{font-family:var(--display);font-weight:400;font-size:1.5rem}
+.stats span{font-size:.8rem;color:var(--muted)}
 
 /* rooms */
 .rooms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
@@ -176,7 +186,7 @@ input,select,textarea{font-size:16px}
     <div style="display:flex;flex-direction:column;gap:22px">
       <div style="display:flex;flex-direction:column;gap:8px">
         <span class="eyebrow">Planejamento do apartamento</span>
-        <h1>Casa Nova</h1>
+        <h1>Casa Nova da Vi</h1>
       </div>
       <form class="auth" id="authForm" autocomplete="on">
         <input id="authEmail" type="email" placeholder="Seu e-mail" autocomplete="email" required aria-label="E-mail">
@@ -192,12 +202,12 @@ input,select,textarea{font-size:16px}
     <div style="display:flex;flex-direction:column;gap:22px">
       <div style="display:flex;flex-direction:column;gap:8px">
         <span class="eyebrow">Planejamento do apartamento</span>
-        <h1>Casa Nova</h1>
+        <h1>Casa Nova da Vi</h1>
       </div>
       <div class="summary" id="summary"></div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 3</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 4</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -240,7 +250,7 @@ const parsePrice = s => { s = String(s||"").replace(/[^\d,.-]/g,""); if(!s) retu
 const $ = id => document.getElementById(id);
 
 let items = [];        // [{id, ...data}]
-let db = null, col = null;
+let db = null, col = null, budget = 15000, editingBudget = false;
 let current = null, filter = "all", openEdit = null, openShop = null, openOpt = null, assets = null;
 
 function stats(list){
@@ -252,10 +262,22 @@ function stats(list){
 
 function renderHome(){
   const s = stats(items);
+  const free = budget - s.total, pct = budget > 0 ? Math.min(100, s.total / budget * 100) : 0;
   $("summary").innerHTML = `
-    <div><strong class="num">${s.done}/${s.count}</strong><span>itens comprados</span></div>
-    <div><strong class="num">${fmt(s.total)}</strong><span>orçamento estimado</span></div>
-    <div><strong class="num">${fmt(s.left)}</strong><span>ainda a gastar</span></div>`;
+    <div class="budget">
+      <span class="lbl">Orçamento</span>
+      ${editingBudget ? `<form class="budget-form" id="budgetForm" autocomplete="off">
+          <input id="budgetInput" inputmode="decimal" class="num" value="${String(budget).replace(".",",")}" aria-label="Orçamento total em reais">
+          <button class="btn" type="submit">Salvar</button><button class="btn ghost" type="button" data-budget-cancel>Cancelar</button></form>`
+        : `<button type="button" class="budget-btn num" data-budget-edit>${fmt(budget)} <small>Editar</small></button>`}
+      <div class="bar"><i class="${free < 0 ? "over-bar" : ""}" style="width:${pct}%"></i></div>
+    </div>
+    <div class="stats">
+      <div><strong class="num">${s.done}/${s.count}</strong><span>itens comprados</span></div>
+      <div><strong class="num">${fmt(s.total)}</strong><span>previsto nos itens</span></div>
+      <div><strong class="num ${free < 0 ? "over" : ""}">${fmt(Math.abs(free))}</strong><span class="${free < 0 ? "over" : ""}">${free < 0 ? "acima do orçamento" : "ainda livre"}</span></div>
+      <div><strong class="num">${fmt(s.spent)}</strong><span>já gasto</span></div>
+    </div>`;
   $("rooms").innerHTML = ROOMS.map(r=>{
     const st = stats(items.filter(i=>i.room===r.id));
     const pct = st.count ? Math.round(st.done/st.count*100) : 0;
@@ -603,6 +625,8 @@ async function reload(){
       : "Não foi possível carregar a lista. Verifique a internet.";
     render(); return; }
   items = data.map(fromRow);
+  const st = await sb.from("settings").select("budget").maybeSingle();
+  if (!st.error && st.data && st.data.budget != null) budget = Number(st.data.budget);
   if (!items.length && await importSeed()) return reload();
   $("status").textContent = "Toque em um cômodo para ver e editar a lista.";
   render();
@@ -627,6 +651,7 @@ function subscribe(){
   if (channel) sb.removeChannel(channel);
   channel = sb.channel("items-" + session.user.id)
     .on("postgres_changes", {event:"*", schema:"public", table:"items", filter:`user_id=eq.${session.user.id}`}, reloadSoon)
+    .on("postgres_changes", {event:"*", schema:"public", table:"settings", filter:`user_id=eq.${session.user.id}`}, reloadSoon)
     .subscribe();
 }
 
@@ -637,6 +662,20 @@ async function setSession(s){
   $("who").textContent = session.user.email || "";
   if (changed){ render(); await reload(); subscribe(); }
 }
+
+/* ---------- orçamento ---------- */
+$("summary").addEventListener("click", e=>{
+  if (e.target.closest("[data-budget-edit]")){ editingBudget = true; renderHome(); const i=$("budgetInput"); i && (i.focus(), i.select()); }
+  if (e.target.closest("[data-budget-cancel]")){ editingBudget = false; renderHome(); }
+});
+$("summary").addEventListener("submit", async e=>{
+  if (e.target.id !== "budgetForm") return; e.preventDefault();
+  const v = parsePrice($("budgetInput").value);
+  if (v == null || v < 0){ $("budgetInput").focus(); return; }
+  budget = v; editingBudget = false; renderHome();
+  const {error} = await sb.from("settings").upsert({user_id: session.user.id, budget: v, updated_at: new Date().toISOString()});
+  if (error){ console.error(error); $("status").textContent = "Não foi possível salvar o orçamento. Verifique a internet e tente de novo."; }
+});
 
 /* ---------- login ---------- */
 const authMsg = (t, err) => { const m = $("authMsg"); m.textContent = t; m.classList.toggle("err", !!err); };
