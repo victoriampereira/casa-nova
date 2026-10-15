@@ -59,12 +59,18 @@ function offerPrice(offers: any): number | undefined {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  // Só aceita quem está logado no app.
+  const auth = req.headers.get("Authorization") || "";
+  const who = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/user`, {
+    headers: { Authorization: auth, apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "" },
+  }).catch(() => null);
+  if (!who || !who.ok) return json({ error: "faça login no app" }, 401);
   try {
     const { url } = await req.json();
     let target: URL;
-    try { target = new URL(String(url)); } catch { return json({ error: "link inválido" }, 400); }
-    if (!/^https?:$/.test(target.protocol)) return json({ error: "link inválido" }, 400);
-    if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.)/.test(target.hostname)) return json({ error: "link inválido" }, 400);
+    try { target = new URL(String(url)); } catch { return json({ error: "link inválido" }); }
+    if (!/^https?:$/.test(target.protocol)) return json({ error: "link inválido" });
+    if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.)/.test(target.hostname)) return json({ error: "link inválido" });
 
     const res = await fetch(target.toString(), {
       redirect: "follow",
