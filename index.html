@@ -207,7 +207,7 @@ input,select,textarea{font-size:16px}
       <div class="summary" id="summary"></div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 4</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 5</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -364,6 +364,7 @@ function optCard(i,o){
       <span class="ttl">${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(o.title||"Ver produto")}</a>` : esc(o.title||"Produto")}</span>
       ${o.price!=null ? `<span class="pr num">${fmt(o.price)}</span>${o.priceNote?`<span class="pnote">${esc(o.priceNote)}</span>`:""}`
         : enriching.has(o.id) ? `<span class="pnote">Buscando foto e preço…</span>`
+        : o.pending ? `<span class="pnote">Foto e preço chegam em até 1 hora · <button type="button" class="lnk" data-optedit="${o.id}">pôr preço agora</button></span>`
         : `<button type="button" class="lnk" data-optedit="${o.id}">Adicionar preço</button>`}
     </div>
     ${editing ? `<form class="optedit" data-opteditform="${o.id}" autocomplete="off">
@@ -498,7 +499,9 @@ $("lists").addEventListener("click", e=>{
   if (od){
     if (od.dataset.confirm !== "1"){ od.dataset.confirm="1"; od.textContent="Confirmar"; return; }
     const oid = od.dataset.optdel;
-    setOptions(itemOf(od), s=>{ s.options = s.options.filter(x=>x.id!==oid); if(s.chosenId===oid){ s.chosenId=null; } return s; }); return; }
+    setOptions(itemOf(od), s=>{ s.options = s.options.filter(x=>x.id!==oid);
+      if(s.chosenId===oid){ const n = s.options[0]; s.chosenId = n ? n.id : null; s.price = n ? (n.price ?? null) : null; s.link = n ? n.link : ""; }
+      return s; }); return; }
   const ed = e.target.closest("[data-edit]");
   if (ed){ openEdit = openEdit===ed.dataset.edit ? null : ed.dataset.edit; openShop=null; renderDetail();
     if(openEdit){ const f=document.querySelector(`[data-form="${openEdit}"] input`); f && f.focus(); } return; }
@@ -529,7 +532,7 @@ $("lists").addEventListener("submit", e=>{
     const link = cleanLink(m[0]), title = nameFromLink(link);
     const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title || "Produto", price:null, priceNote:"", photo:"", link, pending:true, addedAt:Date.now()};
     openShop = null;
-    setOptions(id, s=>{ s.options.unshift(opt); if(!s.chosenId){ s.chosenId=opt.id; s.link=link; } return s; });
+    setOptions(id, s=>{ s.options.unshift(opt); if(!s.chosenId || !s.options.some(x=>x.id===s.chosenId && x.id!==opt.id)){ s.chosenId=opt.id; s.link=link; s.price=null; } return s; });
     enrich(id, opt.id);
     return; }
   const oef = e.target.closest("[data-opteditform]");
@@ -598,7 +601,7 @@ async function enrich(itemId, optId, manual){
   }catch(e){ console.warn("produto:", e); fnAvailable = false;
     if (manual) alertMsg("Não consegui buscar os dados dessa loja. Toque na foto para enviar uma imagem e em Editar para pôr o preço."); }
   enriching.delete(optId);
-  if (!info || info.error){ if (info && info.error && manual) alertMsg("A loja não liberou os dados dessa página. Toque na foto para enviar uma imagem e em Editar para pôr o preço."); render(); return; }
+  if (!info || info.error){ if (info && info.error && manual) alertMsg("Essa loja bloqueia a busca automática pelo app. Em até 1 hora a foto e o preço são completados, ou toque em Editar para pôr o preço agora."); render(); return; }
   const d = new Date(), seen = `preço visto em ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
   await setOptions(itemId, s=>{ const x = s.options.find(y=>y.id===optId); if (x){
       if (info.image && !x.photo) x.photo = info.image;
