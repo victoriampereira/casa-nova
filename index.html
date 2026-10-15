@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Casa Nova</title>
+<meta name="theme-color" content="#f5f5f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161714" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Casa Nova">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: a quiet floor-plan index of four rooms; tap one to open its shopping list. */
+:root{
+  --bg:#f5f5f1; --surface:#ffffff; --ink:#1d1e1b; --muted:#73766c; --line:#dfe0d8;
+  --accent:#4d5a3b; --accent-soft:#e7eadf; --done:#a3a69a; --danger:#9a3b2e;
+  --display:"Marcellus", "Cormorant Garamond", Georgia, serif;
+  --body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#161714; --surface:#1f201c; --ink:#ecebe4; --muted:#9a9d91; --line:#33352f;
+  --accent:#b4c296; --accent-soft:#2a2f22; --done:#6b6e64; --danger:#e08d7e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161714; --surface:#1f201c; --ink:#ecebe4; --muted:#9a9d91; --line:#33352f;
+  --accent:#b4c296; --accent-soft:#2a2f22; --done:#6b6e64; --danger:#e08d7e; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-tap-highlight-color:transparent;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:clamp(2.2rem,8vw,3.2rem);line-height:1.05}
+h2{font-size:clamp(1.8rem,6vw,2.4rem);line-height:1.1}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* summary */
+.summary{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:baseline;border-top:1px solid var(--line);padding-top:16px}
+.summary div{display:flex;flex-direction:column}
+.summary strong{font-family:var(--display);font-weight:400;font-size:1.5rem}
+.summary span{font-size:.8rem;color:var(--muted)}
+
+/* rooms */
+.rooms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.room{all:unset;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:4px;
+  padding:18px;display:flex;flex-direction:column;gap:14px;min-height:190px;transition:border-color .2s,transform .2s}
+.room:hover{border-color:var(--accent)}
+.room:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.room svg{width:44px;height:44px;stroke:var(--ink);fill:none;stroke-width:1.2}
+.room .name{font-family:var(--display);font-size:1.35rem;line-height:1.15}
+.room .meta{font-size:.8rem;color:var(--muted);margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .4s}
+
+/* detail */
+.back{all:unset;cursor:pointer;font-size:.85rem;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.back:hover{color:var(--ink)}
+.dhead{display:flex;flex-direction:column;gap:10px}
+.dstats{display:flex;gap:20px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.dstats b{color:var(--ink);font-weight:600}
+
+form.add{display:grid;grid-template-columns:minmax(0,1fr) 120px auto;gap:8px;background:var(--surface);
+  border:1px solid var(--line);border-radius:4px;padding:8px}
+form.add input,form.add select{border:0;background:transparent;padding:10px 8px;min-width:0}
+form.add input:focus,form.add select:focus{outline:none;background:var(--accent-soft);border-radius:3px}
+.btn{all:unset;cursor:pointer;background:var(--accent);color:var(--bg);padding:10px 16px;border-radius:3px;
+  font-weight:600;font-size:.85rem;text-align:center}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--line)}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chip{all:unset;cursor:pointer;font-size:.8rem;padding:6px 12px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.group{display:flex;flex-direction:column}
+.group h3{margin:0 0 4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:600}
+ul.items{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+li.item{border-bottom:1px solid var(--line)}
+.row{display:grid;grid-template-columns:28px minmax(0,1fr) auto 34px;gap:12px;align-items:center;padding:14px 2px}
+.plus{all:unset;cursor:pointer;width:30px;height:30px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;
+  color:var(--accent);font-size:1.15rem;line-height:1;transition:background .2s,transform .2s}
+.plus:hover{background:var(--accent-soft)}
+.plus[aria-expanded="true"]{background:var(--accent);color:var(--bg);border-color:var(--accent);transform:rotate(45deg)}
+.plus:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shop{display:flex;flex-direction:column;gap:14px;padding:4px 2px 18px 40px}
+.opts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.opt{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px 14px;align-items:start;background:var(--surface);
+  border:1px solid var(--line);border-radius:4px;padding:12px}
+.opt.chosen{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.thumb{width:84px;height:84px;border-radius:3px;background:#fff;border:1px solid var(--line);overflow:hidden;display:grid;place-items:center;cursor:pointer}
+span.thumb{cursor:default}
+.thumb img{width:100%;height:100%;object-fit:contain}
+.thumb .ph{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:.68rem}
+.thumb:has(.ph){background:var(--accent-soft);border-style:dashed}
+.oinfo{display:flex;flex-direction:column;gap:3px;min-width:0}
+.opt .src{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:600}
+.opt .brand{color:var(--muted)}
+.opt .ttl{font-size:.88rem;line-height:1.35;overflow-wrap:anywhere}
+.opt .ttl a{color:inherit;text-decoration:none}
+.opt .ttl a:hover{text-decoration:underline}
+.opt .pr{font-family:var(--display);font-size:1.3rem;margin-top:2px}
+.opt .pnote{font-size:.74rem;color:var(--muted)}
+.opt .acts{grid-column:1/-1;display:flex;gap:16px;align-items:center;font-size:.8rem;border-top:1px solid var(--line);padding-top:10px}
+.lnk{all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:.8rem}
+.lnk.muted{color:var(--muted);font-weight:500}
+.lnk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pick{font-size:.8rem;color:var(--accent);font-weight:600}
+form.optform{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+form.optform input{border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:10px;min-width:0;font-size:.88rem}
+form.optedit{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+form.optedit label{display:flex;flex-direction:column;gap:4px;font-size:.74rem;color:var(--muted)}
+form.optedit .full{grid-column:1/-1}
+form.optedit input{border:1px solid var(--line);background:var(--bg);border-radius:3px;padding:8px 10px;min-width:0;font-size:.88rem}
+form.optedit .acts{display:flex;gap:8px;border:0;padding:0}
+.check{appearance:none;width:22px;height:22px;border:1.5px solid var(--muted);border-radius:50%;margin:0;cursor:pointer;display:grid;place-items:center}
+.check:checked{background:var(--accent);border-color:var(--accent)}
+.check:checked::after{content:"";width:6px;height:10px;border:solid var(--bg);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.iname{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.iname .t{overflow-wrap:anywhere}
+.iname .s{font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
+.tag{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:600}
+.price{font-size:.9rem;text-align:right;white-space:nowrap}
+.price.empty{color:var(--muted)}
+li.done .t{text-decoration:line-through;color:var(--done)}
+li.done .price{color:var(--done)}
+
+.edit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:4px 2px 16px 40px}
+.edit label{display:flex;flex-direction:column;gap:4px;font-size:.75rem;color:var(--muted)}
+.edit label.full{grid-column:1/-1}
+.edit input,.edit select,.edit textarea{border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:8px 10px;min-width:0;font-size:.9rem}
+.edit textarea{resize:vertical;min-height:56px}
+.edit .actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.edit .actions .spacer{flex:1}
+a.link{color:var(--accent);font-size:.78rem;overflow-wrap:anywhere}
+
+.empty-state{color:var(--muted);font-size:.9rem;padding:18px 0}
+.note{font-size:.8rem;color:var(--muted)}
+
+.auth{display:flex;flex-direction:column;gap:14px;max-width:380px}
+.auth input{border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:12px;font-size:16px;min-width:0}
+.auth .row2{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.auth .msg{font-size:.85rem;color:var(--muted);min-height:1.2em;margin:0}
+.auth .msg.err{color:var(--danger)}
+.foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+input,select,textarea{font-size:16px}
+@media (max-width:460px){
+  form.add{grid-template-columns:minmax(0,1fr) 96px}
+  form.add .btn{grid-column:1/-1}
+  .edit{padding-left:0;grid-template-columns:minmax(0,1fr)}
+  .shop{padding-left:0}
+  .row{gap:10px}
+  .room{min-height:170px;padding:16px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section id="auth" hidden>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span class="eyebrow">Planejamento do apartamento</span>
+        <h1>Casa Nova</h1>
+      </div>
+      <form class="auth" id="authForm" autocomplete="on">
+        <input id="authEmail" type="email" placeholder="Seu e-mail" autocomplete="email" required aria-label="E-mail">
+        <input id="authPass" type="password" placeholder="Senha (mínimo 6 caracteres)" autocomplete="current-password" minlength="6" required aria-label="Senha">
+        <div class="row2"><button class="btn" type="submit" id="btnLogin">Entrar</button>
+          <button class="btn ghost" type="button" id="btnSignup">Criar conta</button></div>
+        <p class="msg" id="authMsg" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+  <section id="home" hidden>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span class="eyebrow">Planejamento do apartamento</span>
+        <h1>Casa Nova</h1>
+      </div>
+      <div class="summary" id="summary"></div>
+      <div class="rooms" id="rooms"></div>
+      <p class="note" id="status">Carregando sua lista…</p>
+      <div class="foot"><span id="who"></span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+    </div>
+  </section>
+
+  <section id="detail" hidden>
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <button class="back" id="back" type="button">← Todos os cômodos</button>
+      <div class="dhead">
+        <span class="eyebrow" id="dEyebrow"></span>
+        <h2 id="dTitle"></h2>
+        <div class="dstats" id="dStats"></div>
+        <div class="bar"><i id="dBar" style="width:0"></i></div>
+      </div>
+      <form class="add" id="addForm" autocomplete="off">
+        <input id="addName" placeholder="Adicionar item…" aria-label="Nome do item" required>
+        <input id="addPrice" inputmode="decimal" placeholder="R$ 0,00" aria-label="Preço estimado" class="num">
+        <button class="btn" type="submit">Adicionar</button>
+      </form>
+      <div class="filters" id="filters">
+        <button class="chip" type="button" data-f="all" aria-pressed="true">Tudo</button>
+        <button class="chip" type="button" data-f="essencial" aria-pressed="false">Essenciais</button>
+        <button class="chip" type="button" data-f="depois" aria-pressed="false">Pode esperar</button>
+      </div>
+      <div id="lists" style="display:flex;flex-direction:column;gap:26px"></div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const ROOMS = [
+  {id:"cozinha", name:"Cozinha", icon:'<svg viewBox="0 0 44 44"><rect x="6" y="8" width="32" height="30"/><line x1="6" y1="18" x2="38" y2="18"/><circle cx="14" cy="13" r="2"/><circle cx="22" cy="13" r="2"/><rect x="12" y="23" width="20" height="10"/></svg>'},
+  {id:"sala", name:"Sala de estar", icon:'<svg viewBox="0 0 44 44"><path d="M8 30V20a4 4 0 0 1 4-4h20a4 4 0 0 1 4 4v10"/><rect x="5" y="24" width="34" height="8"/><line x1="9" y1="32" x2="9" y2="36"/><line x1="35" y1="32" x2="35" y2="36"/></svg>'},
+  {id:"quarto", name:"Quarto", icon:'<svg viewBox="0 0 44 44"><rect x="6" y="22" width="32" height="10"/><path d="M8 22V12h28v10"/><rect x="11" y="16" width="9" height="6"/><rect x="24" y="16" width="9" height="6"/><line x1="8" y1="32" x2="8" y2="36"/><line x1="36" y1="32" x2="36" y2="36"/></svg>'},
+  {id:"banheiro", name:"Banheiro", icon:'<svg viewBox="0 0 44 44"><path d="M6 22h32v4a8 8 0 0 1-8 8H14a8 8 0 0 1-8-8z"/><path d="M10 22V10a3 3 0 0 1 6 0"/><line x1="14" y1="34" x2="12" y2="38"/><line x1="30" y1="34" x2="32" y2="38"/></svg>'}
+];
+const brl = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
+const fmt = v => (typeof v === "number" && isFinite(v)) ? brl.format(v) : "—";
+const parsePrice = s => { s = String(s||"").replace(/[^\d,.-]/g,""); if(!s) return null;
+  if (s.includes(",")) s = s.replace(/\./g,"").replace(",","."); const n = parseFloat(s); return isFinite(n) ? n : null; };
+const $ = id => document.getElementById(id);
+
+let items = [];        // [{id, ...data}]
+let db = null, col = null;
+let current = null, filter = "all", openEdit = null, openShop = null, openOpt = null, assets = null;
+
+function stats(list){
+  const total = list.reduce((a,i)=>a+(i.price||0),0);
+  const spent = list.filter(i=>i.done).reduce((a,i)=>a+(i.price||0),0);
+  const done = list.filter(i=>i.done).length;
+  return {count:list.length, done, total, spent, left: total-spent};
+}
+
+function renderHome(){
+  const s = stats(items);
+  $("summary").innerHTML = `
+    <div><strong class="num">${s.done}/${s.count}</strong><span>itens comprados</span></div>
+    <div><strong class="num">${fmt(s.total)}</strong><span>orçamento estimado</span></div>
+    <div><strong class="num">${fmt(s.left)}</strong><span>ainda a gastar</span></div>`;
+  $("rooms").innerHTML = ROOMS.map(r=>{
+    const st = stats(items.filter(i=>i.room===r.id));
+    const pct = st.count ? Math.round(st.done/st.count*100) : 0;
+    return `<button class="room" type="button" data-room="${r.id}">
+      ${r.icon}
+      <span class="name">${r.name}</span>
+      <span class="meta"><span class="num">${st.done} de ${st.count} comprados · ${fmt(st.total)}</span>
+      <span class="bar"><i style="width:${pct}%"></i></span></span></button>`;
+  }).join("");
+}
+
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+const STORE_HOSTS = {magazineluiza:"Magalu", mercadolivre:"Mercado Livre", mercadolibre:"Mercado Livre", casasbahia:"Casas Bahia", shopee:"Shopee",
+  amazon:"Amazon", americanas:"Americanas", tokstok:"Tok&Stok", mobly:"Mobly", leroymerlin:"Leroy Merlin", pontofrio:"Ponto", pontofrio_:"Ponto",
+  fastshop:"Fast Shop", kabum:"KaBuM!", carrefour:"Carrefour", madeiramadeira:"MadeiraMadeira", camicado:"Camicado", etna:"Etna",
+  submarino:"Submarino", extra:"Extra", shein:"Shein", aliexpress:"AliExpress", westwing:"Westwing", oppa:"Oppa"};
+const BRANDS = ["Electrolux","Brastemp","Consul","Samsung","LG","Panasonic","Philco","Midea","Mondial","Britânia","Britania","Tramontina","Arno","Oster",
+  "Continental","Esmaltec","Atlas","Fischer","Dako","Ortobom","Castor","Probel","Simmons","Sealy","Herval","Kappesberg","Madesa","Lorenzetti","Deca","Docol",
+  "Wap","Cadence","Multilaser","Sony","TCL","AOC","Philips","Walita","Nespresso","Polishop","KitchenAid","Fogatti","Suggar","Elgin","Springer","Gree",
+  "Agratto","Black+Decker","Electrolux","Hamilton Beach","Cuisinart","Rochedo","Oxford","Le Creuset","Brinox","Mor","Coza","Ordene","Plasútil","Sanremo",
+  "Buddemeyer","Karsten","Santista","Teka","Altenburg","Trussardi","Duoflex","Nasa","Fibrasca","Emma","Zissou","Tok&Stok","Mobly","Itatiaia","Bertolini","Politorno","Lukaliam","Henn","Bartira","Poliman","Xiaomi","Motorola","JBL","Mallory","Ventisol","Positivo","Intelbras"];
+const SMALL = new Set(["de","da","do","das","dos","com","e","para","em","a","o","sem","por","na","no"]);
+
+function storeFromLink(link){
+  try{ const h = new URL(link).hostname.toLowerCase();
+    const k = Object.keys(STORE_HOSTS).find(k=>h.includes(k)); if(k) return STORE_HOSTS[k];
+    const parts = h.replace(/^(www|m|loja|produto|lista)\./,"").split(".");
+    return parts[0].replace(/^\w/,c=>c.toUpperCase());
+  }catch(e){ return "Loja"; }
+}
+function cleanLink(link){
+  try{ const u = new URL(link);
+    if (/magazineluiza\.com\.br$/.test(u.hostname)) u.hostname = "www.magazineluiza.com.br";
+    ["utm_source","utm_medium","utm_term","utm_campaign","utm_content","gclid","gbraid","wbraid","gclsrc","gad_source","gad_campaignid","partner_id","fbclid"]
+      .forEach(p=>u.searchParams.delete(p));
+    let s = u.toString(); if (s.endsWith("?")) s = s.slice(0,-1); return s;
+  }catch(e){ return link; }
+}
+function titleCase(slug){
+  return slug.split(/[-_+]+/).filter(Boolean).map((w,i)=>{
+    const lw = w.toLowerCase();
+    if (/\d/.test(w)) return w.toUpperCase();
+    if (i>0 && SMALL.has(lw)) return lw;
+    return lw.charAt(0).toUpperCase()+lw.slice(1);
+  }).join(" ");
+}
+function nameFromLink(link){
+  try{ const u = new URL(link); const segs = u.pathname.split("/").filter(Boolean).map(s=>{ try{return decodeURIComponent(s)}catch(e){return s} });
+    let best = "";
+    for (let s of segs){
+      s = s.replace(/^MLB-?\d+-?/i,"").replace(/-_JM.*$/i,"").replace(/-i\.\d+\.\d+$/,"").replace(/\.html?$/,"");
+      if (s.split("-").length > best.split("-").length) best = s;
+    }
+    return best.split("-").length >= 2 ? titleCase(best) : "";
+  }catch(e){ return ""; }
+}
+function brandFrom(text){
+  const t = " "+String(text||"").toLowerCase()+" ";
+  const b = BRANDS.find(b=>t.includes(" "+b.toLowerCase()+" ")); return b || "";
+}
+const safeUrl = u => /^https?:\/\//i.test(u||"") ? u : "";
+const PH = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>';
+
+function shopPanel(i){
+  const opts = Array.isArray(i.options) ? i.options : [];
+  return `<div class="shop">
+    <form class="optform" data-optform="${i.id}" autocomplete="off">
+      <input id="o-link-${i.id}" name="link" type="url" inputmode="url" placeholder="Cole aqui o link do produto" required aria-label="Link do produto">
+      <button class="btn" type="submit">Adicionar</button>
+    </form>
+    ${opts.length ? `<ul class="opts">${opts.map(o=>optCard(i,o)).join("")}</ul>`
+      : `<p class="note" style="margin:0">Cole o link de um produto de qualquer loja. Loja, marca e nome aparecem na hora.</p>`}
+  </div>`;
+}
+
+function optCard(i,o){
+  const chosen = i.chosenId===o.id, href = safeUrl(o.link), editing = openOpt===o.id;
+  const photo = o.photo ? `<img src="${esc(o.photo)}" alt="${esc(o.title)}">` : `<span class="ph">${PH}${assets?'<span>Foto</span>':''}</span>`;
+  const thumb = assets
+    ? `<label class="thumb" for="ph-${o.id}" title="Trocar foto">${photo}<input type="file" accept="image/*" id="ph-${o.id}" data-photo="${o.id}" hidden></label>`
+    : `<span class="thumb">${photo}</span>`;
+  return `<li class="opt ${chosen?"chosen":""}">
+    ${thumb}
+    <div class="oinfo">
+      <span class="src">${esc(o.store)}${o.brand?` · <span class="brand">${esc(o.brand)}</span>`:""}</span>
+      <span class="ttl">${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(o.title||"Ver produto")}</a>` : esc(o.title||"Produto")}</span>
+      ${o.price!=null ? `<span class="pr num">${fmt(o.price)}</span>${o.priceNote?`<span class="pnote">${esc(o.priceNote)}</span>`:""}`
+        : `<button type="button" class="lnk" data-optedit="${o.id}">Adicionar preço</button>`}
+    </div>
+    ${editing ? `<form class="optedit" data-opteditform="${o.id}" autocomplete="off">
+      <label class="full">Nome<input id="oe-t-${o.id}" name="title" value="${esc(o.title)}"></label>
+      <label>Marca<input id="oe-b-${o.id}" name="brand" value="${esc(o.brand)}"></label>
+      <label>Preço<input id="oe-p-${o.id}" name="price" inputmode="decimal" class="num" value="${o.price!=null?String(o.price).replace(".",","):""}" placeholder="R$ 0,00"></label>
+      <div class="acts" style="grid-column:1/-1"><button class="btn" type="submit">Salvar</button><button class="btn ghost" type="button" data-optedit="${o.id}">Fechar</button></div>
+    </form>` : ""}
+    <div class="acts">${chosen ? `<span class="pick">✓ Escolhido</span>` : `<button type="button" class="lnk" data-choose="${o.id}">Escolher este</button>`}
+      ${editing ? "" : `<button type="button" class="lnk muted" data-optedit="${o.id}">Editar</button>`}
+      <button type="button" class="lnk muted" data-optdel="${o.id}">Remover</button></div>
+  </li>`;
+}
+
+function itemRow(i){
+  const chosenOpt = (i.options||[]).find(o=>o.id===i.chosenId);
+  const sub = [chosenOpt ? chosenOpt.store : "", i.note].filter(Boolean).map(esc).join(" · ");
+  const nOpts = (i.options||[]).length;
+  const open = openEdit === i.id, shop = openShop === i.id;
+  return `<li class="item ${i.done?"done":""}" data-id="${i.id}">
+    <div class="row">
+      <input type="checkbox" class="check" id="c-${i.id}" ${i.done?"checked":""} aria-label="Marcar ${esc(i.name)} como comprado">
+      <button type="button" class="iname" data-edit="${i.id}" aria-expanded="${open}">
+        ${i.priority==="essencial" ? '<span class="tag">Essencial</span>' : ''}
+        <span class="t">${esc(i.name)}</span>
+        ${sub ? `<span class="s">${sub}</span>` : ""}
+      </button>
+      <span class="price num ${i.price==null?"empty":""}">${fmt(i.price)}</span>
+      <button type="button" class="plus" data-shop="${i.id}" aria-expanded="${shop}" aria-label="Produtos para ${esc(i.name)}${nOpts?` (${nOpts})`:""}">+</button>
+    </div>
+    ${shop ? shopPanel(i) : ""}
+    ${open ? `<form class="edit" data-form="${i.id}">
+      <label class="full">Item<input id="e-name-${i.id}" name="name" value="${esc(i.name)}" required></label>
+      <label>Preço estimado<input id="e-price-${i.id}" name="price" inputmode="decimal" class="num" value="${i.price!=null?String(i.price).replace(".",","):""}" placeholder="R$ 0,00"></label>
+      <label>Prioridade<select id="e-pri-${i.id}" name="priority">
+        <option value="essencial" ${i.priority==="essencial"?"selected":""}>Essencial</option>
+        <option value="depois" ${i.priority!=="essencial"?"selected":""}>Pode esperar</option></select></label>
+      <label class="full">Observação (medida, cor, loja)<textarea id="e-note-${i.id}" name="note">${esc(i.note)}</textarea></label>
+      <label class="full">Link do produto<input id="e-link-${i.id}" name="link" type="url" value="${esc(i.link)}" placeholder="https://"></label>
+      ${i.link ? `<a class="link full" href="${esc(i.link)}" target="_blank" rel="noopener">Abrir link ↗</a>` : ""}
+      <div class="actions"><button class="btn" type="submit">Salvar</button>
+        <button class="btn ghost" type="button" data-cancel>Fechar</button><span class="spacer"></span>
+        <button class="btn danger" type="button" data-del="${i.id}">Remover</button></div>
+    </form>` : ""}
+  </li>`;
+}
+
+function renderDetail(){
+  const r = ROOMS.find(x=>x.id===current); if(!r) return;
+  const all = items.filter(i=>i.room===r.id);
+  const st = stats(all);
+  $("dEyebrow").textContent = `${ROOMS.indexOf(r)+1} de ${ROOMS.length} cômodos`;
+  $("dTitle").textContent = r.name;
+  $("dStats").innerHTML = `<span><b class="num">${st.done}/${st.count}</b> comprados</span>
+    <span>Estimado <b class="num">${fmt(st.total)}</b></span><span>Falta <b class="num">${fmt(st.left)}</b></span>`;
+  $("dBar").style.width = (st.count ? st.done/st.count*100 : 0) + "%";
+  document.querySelectorAll("#filters .chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.f===filter)));
+  const shown = all.filter(i => filter==="all" || (filter==="essencial" ? i.priority==="essencial" : i.priority!=="essencial"));
+  const todo = shown.filter(i=>!i.done), done = shown.filter(i=>i.done);
+  const sortFn = (a,b)=> (a.priority==="essencial"?0:1)-(b.priority==="essencial"?0:1) || (a.createdAt||0)-(b.createdAt||0);
+  todo.sort(sortFn); done.sort(sortFn);
+  let html = "";
+  html += `<div class="group"><h3>A comprar · ${todo.length}</h3>${todo.length ? `<ul class="items">${todo.map(itemRow).join("")}</ul>`
+    : `<p class="empty-state">${all.length ? "Nada pendente aqui." : "Nenhum item ainda. Adicione o primeiro acima."}</p>`}</div>`;
+  if (done.length) html += `<div class="group"><h3>Comprado · ${done.length}</h3><ul class="items">${done.map(itemRow).join("")}</ul></div>`;
+  $("lists").innerHTML = html;
+}
+
+function render(){
+  const signedIn = !!session;
+  $("auth").hidden = signedIn;
+  if (!signedIn){ $("home").hidden = true; $("detail").hidden = true; return; }
+  const inDetail = !!current;
+  $("home").hidden = inDetail; $("detail").hidden = !inDetail;
+  inDetail ? renderDetail() : renderHome();
+}
+
+function go(roomId){
+  current = roomId; openEdit = null; openShop = null; openOpt = null; filter = "all";
+  try { history.replaceState(null,"", roomId ? "#"+roomId : location.pathname); } catch(e){}
+  render(); window.scrollTo(0,0);
+}
+
+/* ---------- writes ---------- */
+async function write(fn, localFn){
+  localFn(); render();
+  try { await fn(); }
+  catch(e){ console.error(e); alertMsg("Não foi possível salvar. Verifique a internet e tente de novo."); await reload(); }
+}
+function alertMsg(t){ $("status").textContent = t; if (current){ const l=$("lists"); l.insertAdjacentHTML("afterbegin", `<p class="note" style="color:var(--danger);margin:0">${esc(t)}</p>`); } }
+
+$("rooms").addEventListener("click", e=>{ const b = e.target.closest("[data-room]"); if(b) go(b.dataset.room); });
+$("back").addEventListener("click", ()=>go(null));
+$("filters").addEventListener("click", e=>{ const c=e.target.closest("[data-f]"); if(!c) return; filter=c.dataset.f; renderDetail(); });
+
+$("addForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const name = $("addName").value.trim(); if(!name) return;
+  const data = {room:current, name, price:parsePrice($("addPrice").value), priority:"essencial", note:"", link:"", done:false, createdAt:Date.now()};
+  $("addName").value=""; $("addPrice").value=""; $("addName").focus();
+  write(()=>col.add(data), ()=>{});
+});
+
+$("lists").addEventListener("change", e=>{
+  if(!e.target.classList.contains("check")) return;
+  const id = e.target.closest("[data-id]").dataset.id, done = e.target.checked;
+  write(()=>col.doc(id).update({done}), ()=>{ const it=items.find(i=>i.id===id); if(it) it.done=done; });
+});
+
+function setOptions(id, mutate){
+  const it = items.find(i=>i.id===id); if(!it) return;
+  const next = mutate({options:(it.options||[]).map(o=>({...o})), chosenId:it.chosenId||null, price:it.price??null, link:it.link||""});
+  return write(()=>col.doc(id).update(next), ()=>Object.assign(it,next));
+}
+const itemOf = el => el.closest("[data-id]").dataset.id;
+
+$("lists").addEventListener("click", e=>{
+  const sh = e.target.closest("[data-shop]");
+  if (sh){ openShop = openShop===sh.dataset.shop ? null : sh.dataset.shop; openEdit=null; openOpt=null; renderDetail();
+    if(openShop){ const f=document.getElementById("o-link-"+openShop); f && f.focus(); } return; }
+  const ch = e.target.closest("[data-choose]");
+  if (ch){ const oid = ch.dataset.choose;
+    setOptions(itemOf(ch), s=>{ const o = s.options.find(x=>x.id===oid); if(o){ s.chosenId=o.id; s.price=o.price??null; s.link=o.link; } return s; }); return; }
+  const oe = e.target.closest("[data-optedit]");
+  if (oe){ openOpt = openOpt===oe.dataset.optedit ? null : oe.dataset.optedit; renderDetail();
+    if(openOpt){ const f=document.getElementById("oe-p-"+openOpt); f && f.focus(); } return; }
+  const od = e.target.closest("[data-optdel]");
+  if (od){
+    if (od.dataset.confirm !== "1"){ od.dataset.confirm="1"; od.textContent="Confirmar"; return; }
+    const oid = od.dataset.optdel;
+    setOptions(itemOf(od), s=>{ s.options = s.options.filter(x=>x.id!==oid); if(s.chosenId===oid){ s.chosenId=null; } return s; }); return; }
+  const ed = e.target.closest("[data-edit]");
+  if (ed){ openEdit = openEdit===ed.dataset.edit ? null : ed.dataset.edit; openShop=null; renderDetail();
+    if(openEdit){ const f=document.querySelector(`[data-form="${openEdit}"] input`); f && f.focus(); } return; }
+  if (e.target.closest("[data-cancel]")){ openEdit=null; renderDetail(); return; }
+  const del = e.target.closest("[data-del]");
+  if (del){
+    if (del.dataset.confirm !== "1"){ del.dataset.confirm="1"; del.textContent="Confirmar remoção"; return; }
+    const id = del.dataset.del; openEdit=null;
+    write(()=>col.doc(id).delete(), ()=>{ items = items.filter(i=>i.id!==id); });
+  }
+});
+
+$("lists").addEventListener("change", async e=>{
+  const inp = e.target.closest("[data-photo]"); if(!inp || !inp.files || !inp.files[0] || !assets) return;
+  const oid = inp.dataset.photo, id = itemOf(inp), file = inp.files[0];
+  const th = inp.closest(".thumb"); th && (th.style.opacity = ".5");
+  try{
+    const up = await assets.upload(file);
+    await setOptions(id, s=>{ const o = s.options.find(x=>x.id===oid); if(o){ o.photo = up.url; o.photoId = up.id; } return s; });
+  }catch(err){ $("status").textContent = "Não foi possível enviar a foto. Tente uma imagem menor (até 20 MB)."; console.error(err); th && (th.style.opacity = ""); }
+});
+
+$("lists").addEventListener("submit", e=>{
+  const of = e.target.closest("[data-optform]");
+  if (of){ e.preventDefault();
+    const id = of.dataset.optform, raw = String(new FormData(of).get("link")||"").trim();
+    const m = raw.match(/https?:\/\/\S+/); if(!m) return;
+    const link = cleanLink(m[0]), title = nameFromLink(link);
+    const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title || "Produto", price:null, priceNote:"", photo:"", link, pending:true, addedAt:Date.now()};
+    setOptions(id, s=>{ s.options.unshift(opt); if(!s.chosenId){ s.chosenId=opt.id; s.link=link; } return s; });
+    return; }
+  const oef = e.target.closest("[data-opteditform]");
+  if (oef){ e.preventDefault();
+    const oid = oef.dataset.opteditform, fd = new FormData(oef), id = itemOf(oef);
+    openOpt = null;
+    setOptions(id, s=>{ const o = s.options.find(x=>x.id===oid); if(o){
+      o.title = String(fd.get("title")||"").trim() || o.title; o.brand = String(fd.get("brand")||"").trim();
+      o.price = parsePrice(fd.get("price")); o.pending = o.price==null;
+      if (s.chosenId===oid) s.price = o.price; } return s; });
+    return; }
+  const f = e.target.closest("[data-form]"); if(!f) return; e.preventDefault();
+  const id = f.dataset.form, fd = new FormData(f);
+  const patch = {name:String(fd.get("name")).trim()||"Item", price:parsePrice(fd.get("price")),
+    priority:fd.get("priority"), note:String(fd.get("note")||"").trim(), link:String(fd.get("link")||"").trim()};
+  openEdit = null;
+  write(()=>col.doc(id).update(patch), ()=>{ const it=items.find(i=>i.id===id); if(it) Object.assign(it,patch); });
+});
+
+/* ---------- Supabase ---------- */
+const SUPABASE_URL = "https://ufbmhikchqhstcbhioib.supabase.co";
+const SUPABASE_KEY = "sb_publishable_QGj4aoHhWZXbCUBep2tylA_a8NckDy7";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {auth:{persistSession:true, autoRefreshToken:true}});
+let session = null, channel = null;
+
+const fromRow = r => ({id:r.id, room:r.room, name:r.name, price:r.price==null?null:Number(r.price), priority:r.priority,
+  note:r.note||"", link:r.link||"", done:!!r.done, options:Array.isArray(r.options)?r.options:[], chosenId:r.chosen_id||null, createdAt:Number(r.created_at)||0});
+function toRow(d){
+  const map = {chosenId:"chosen_id", createdAt:"created_at"}, out = {};
+  for (const [k,v] of Object.entries(d)) if (k!=="id") out[map[k]||k] = v;
+  return out;
+}
+async function check(p){ const {error} = await p; if (error) throw error; }
+
+col = {
+  add: data => check(sb.from("items").insert(toRow(data))).then(reload),
+  doc: id => ({
+    update: patch => check(sb.from("items").update(toRow(patch)).eq("id", id)),
+    delete: () => check(sb.from("items").delete().eq("id", id))
+  })
+};
+assets = {
+  async upload(file){
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g,"") || "jpg";
+    const path = `${session.user.id}/${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const {error} = await sb.storage.from("fotos").upload(path, file, {contentType:file.type||"image/jpeg", upsert:false});
+    if (error) throw error;
+    return {id:path, url:sb.storage.from("fotos").getPublicUrl(path).data.publicUrl};
+  }
+};
+
+let reloadTimer = null;
+async function reload(){
+  if (!session) return;
+  const {data, error} = await sb.from("items").select("*").order("created_at");
+  if (error){ console.error(error);
+    $("status").textContent = /relation|does not exist|schema cache/i.test(error.message||"")
+      ? "O banco de dados ainda não foi configurado. Rode o script casa-nova-supabase.sql no Supabase."
+      : "Não foi possível carregar a lista. Verifique a internet.";
+    render(); return; }
+  items = data.map(fromRow);
+  if (!items.length && await importSeed()) return reload();
+  $("status").textContent = "Toque em um cômodo para ver e editar a lista.";
+  render();
+}
+const reloadSoon = () => { clearTimeout(reloadTimer); reloadTimer = setTimeout(reload, 250); };
+
+async function importSeed(){
+  try{
+    const key = "casa-nova-seed-" + session.user.id;
+    try{ if (localStorage.getItem(key)) return false; }catch(e){}
+    const res = await fetch("seed.json", {cache:"no-store"}); if (!res.ok) return false;
+    const rows = await res.json(); if (!rows.length) return false;
+    const {error} = await sb.from("items").insert(rows);
+    if (error) throw error;
+    try{ localStorage.setItem(key, "1"); }catch(e){}
+    return true;
+  }catch(e){ console.error(e); return false; }
+}
+
+function subscribe(){
+  if (channel) sb.removeChannel(channel);
+  channel = sb.channel("items-" + session.user.id)
+    .on("postgres_changes", {event:"*", schema:"public", table:"items", filter:`user_id=eq.${session.user.id}`}, reloadSoon)
+    .subscribe();
+}
+
+async function setSession(s){
+  const changed = (s?.user?.id) !== (session?.user?.id);
+  session = s;
+  if (!session){ if (channel){ sb.removeChannel(channel); channel = null; } items = []; render(); return; }
+  $("who").textContent = session.user.email || "";
+  if (changed){ render(); await reload(); subscribe(); }
+}
+
+/* ---------- login ---------- */
+const authMsg = (t, err) => { const m = $("authMsg"); m.textContent = t; m.classList.toggle("err", !!err); };
+function authError(e){
+  const m = (e && e.message) || "";
+  if (/invalid login/i.test(m)) return "E-mail ou senha incorretos.";
+  if (/not confirmed/i.test(m)) return "Confirme seu e-mail pelo link que enviamos e tente entrar de novo.";
+  if (/already registered|already exists/i.test(m)) return "Esse e-mail já tem conta. Toque em Entrar.";
+  if (/password/i.test(m)) return "A senha precisa ter pelo menos 6 caracteres.";
+  return "Não foi possível entrar agora. Verifique a internet e tente de novo.";
+}
+$("authForm").addEventListener("submit", async e=>{
+  e.preventDefault(); authMsg("Entrando…");
+  const {data, error} = await sb.auth.signInWithPassword({email:$("authEmail").value.trim(), password:$("authPass").value});
+  if (error) return authMsg(authError(error), true);
+  authMsg(""); setSession(data.session);
+});
+$("btnSignup").addEventListener("click", async ()=>{
+  const email = $("authEmail").value.trim(), password = $("authPass").value;
+  if (!email || password.length < 6) return authMsg("Preencha o e-mail e uma senha com pelo menos 6 caracteres.", true);
+  authMsg("Criando conta…");
+  const {data, error} = await sb.auth.signUp({email, password, options:{emailRedirectTo: location.origin + location.pathname}});
+  if (error) return authMsg(authError(error), true);
+  if (data.session){ authMsg(""); setSession(data.session); }
+  else authMsg("Conta criada. Abra o e-mail de confirmação que enviamos, toque no link e depois volte aqui para entrar.");
+});
+$("btnLogout").addEventListener("click", async ()=>{ await sb.auth.signOut(); setSession(null); });
+
+/* ---------- boot ---------- */
+const start = location.hash.slice(1);
+current = ROOMS.some(r=>r.id===start) ? start : null;
+sb.auth.onAuthStateChange((_ev, s)=>{ setSession(s); });
+sb.auth.getSession().then(({data})=>{ setSession(data.session); if (!data.session) render(); });
+document.addEventListener("visibilitychange", ()=>{ if (!document.hidden) reloadSoon(); });
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
