@@ -250,7 +250,7 @@ input,select,textarea{font-size:16px}
       </div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 8</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 9</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -385,6 +385,22 @@ function brandFrom(text){
   const t = " "+String(text||"").toLowerCase()+" ";
   const b = BRANDS.find(b=>t.includes(" "+b.toLowerCase()+" ")); return b || "";
 }
+/* Lê a mensagem do botão "Compartilhar" das lojas: nome e preço vêm junto com o link. */
+function parseShared(raw, url){
+  const text = raw.replace(url, " ").replace(/\s+/g, " ").trim();
+  const pm = text.match(/R\$\s?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?|\d+(?:,\d{2})?)/);
+  const price = pm ? parsePrice(pm[1]) : null;
+  let t = text;
+  const m1 = t.match(/(?:confira|d[eê] uma olhada em|olha s[oó]|veja|olha isso|olha esse produto|olha o que encontrei[^:]*:)\s*[:\-]?\s*(.+?)(?:\s+(?:por|a partir de|só)\s+R\$|\s+na Shopee|\s+no Mercado Livre|$)/i);
+  if (m1) t = m1[1];
+  else t = t.replace(/\s*(?:(?:por|a partir de)\s+)?R\$.*$/i, "");
+  t = t.replace(/\b(compre (?:na|no) .*|baixe o app.*|na shopee.*|no mercado livre.*)$/i, "")
+       .replace(/^(?:te recomendo(?: este produto)?|recomendo|achei|encontrei)[:\s-]*/i, "")
+       .replace(/[!.:\-–\s]+$/,"").trim();
+  const title = t && t.length >= 4 && !/^https?:/i.test(t) ? t.slice(0, 160) : "";
+  return {title, price: price && price > 0 ? price : null};
+}
+const lastOpt = {};
 const NO_AUTO = /shopee|mercadoli|meli\.la|mercadolibre/i;
 const safeUrl = u => /^https?:\/\//i.test(u||"") ? u : "";
 const PH = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="5" width="18" height="14" rx="1"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>';
@@ -393,9 +409,10 @@ function shopPanel(i){
   const ess = i.priority === "essencial";
   return `<div class="shop">
     <form class="optform" data-optform="${i.id}" autocomplete="off">
-      <input id="o-link-${i.id}" name="link" type="url" inputmode="url" placeholder="Cole aqui o link do produto" aria-label="Link do produto">
+      <input id="o-link-${i.id}" name="link" type="url" inputmode="url" placeholder="Cole o link ou a mensagem de Compartilhar" aria-label="Link do produto">
       <button class="btn" type="submit">Adicionar</button>
     </form>
+    <p class="note" style="margin:0">Na Shopee e no Mercado Livre, use o botão <b>Compartilhar → Copiar</b> e cole aqui: o nome e o preço vêm junto. Depois cole ou toque na foto para adicioná-la.</p>
     <div class="shopfoot">
       <button type="button" class="switch" role="switch" aria-checked="${ess}" data-essencial="${i.id}"><span class="knob"></span>Essencial</button>
       <button type="button" class="lnk muted" data-del="${i.id}">Remover item</button>
@@ -561,6 +578,21 @@ $("lists").addEventListener("click", e=>{
   }
 });
 
+document.addEventListener("paste", async e=>{
+  if (!assets || !current) return;
+  const file = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith("image/"));
+  if (!file) return;
+  const li = (e.target.closest && e.target.closest("[data-id]")) || (openShop && document.querySelector(`li.item[data-id="${openShop}"]`));
+  if (!li) return;
+  const it = items.find(i => i.id === li.dataset.id); if (!it || !(it.options||[]).length) return;
+  const o = it.options.find(x => x.id === lastOpt[it.id]) || it.options.find(x => !x.photo); if (!o) return;
+  e.preventDefault();
+  try{
+    const up = await assets.upload(file);
+    await setOptions(it.id, s=>{ const x = s.options.find(y=>y.id===o.id); if(x){ x.photo = up.url; x.photoId = up.id; } return s; });
+  }catch(err){ console.error(err); alertMsg("Não foi possível enviar a foto. Tente de novo."); }
+});
+
 $("lists").addEventListener("change", async e=>{
   const inp = e.target.closest("[data-photo]"); if(!inp || !inp.files || !inp.files[0] || !assets) return;
   const oid = inp.dataset.photo, id = itemOf(inp), file = inp.files[0];
@@ -576,11 +608,11 @@ $("lists").addEventListener("submit", e=>{
   if (of){ e.preventDefault();
     const id = of.dataset.optform, raw = String(new FormData(of).get("link")||"").trim();
     const m = raw.match(/https?:\/\/\S+/); if(!m){ if(!raw){ openShop=null; renderDetail(); } return; }
-    const link = cleanLink(m[0]), title = nameFromLink(link);
-    const auto = !NO_AUTO.test(link);
-    const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title || "", price:null, priceNote:"", photo:"", link, pending:auto, addedAt:Date.now()};
-    openShop = null;
-    setOptions(id, s=>{ s.options.unshift(opt); if(!s.chosenId || !s.options.some(x=>x.id===s.chosenId && x.id!==opt.id)){ s.chosenId=opt.id; s.link=link; s.price=null; } return s; });
+    const link = cleanLink(m[0]), shared = parseShared(raw, m[0]), title = shared.title || nameFromLink(link);
+    const auto = !NO_AUTO.test(link) && shared.price == null;
+    const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title || "", price:shared.price, priceNote: shared.price!=null ? "preço da mensagem compartilhada" : "", photo:"", link, pending:auto, addedAt:Date.now()};
+    lastOpt[id] = opt.id;
+    setOptions(id, s=>{ s.options.unshift(opt); if(!s.chosenId || !s.options.some(x=>x.id===s.chosenId && x.id!==opt.id)){ s.chosenId=opt.id; s.link=link; s.price=opt.price; } return s; });
     if (auto) enrich(id, opt.id);
     return; }
   const oef = e.target.closest("[data-opteditform]");
