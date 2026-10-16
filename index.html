@@ -250,7 +250,7 @@ input,select,textarea{font-size:16px}
       </div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 13</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 14</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -303,7 +303,8 @@ function stats(list){
   const total = list.reduce((a,i)=>a+(i.price||0),0);
   const spent = list.filter(i=>i.done).reduce((a,i)=>a+(i.price||0),0);
   const done = list.filter(i=>i.done).length;
-  return {count:list.length, done, total, spent, left: total-spent};
+  const reg = list.filter(i=>(i.options||[]).length > 0).length;
+  return {count:list.length, done, reg, total, spent, left: total-spent};
 }
 
 function renderHome(){
@@ -319,18 +320,18 @@ function renderHome(){
       <div class="bar"><i class="${free < 0 ? "over-bar" : ""}" style="width:${pct}%"></i></div>
     </div>
     <div class="stats">
-      <div><strong class="num">${s.done}/${s.count}</strong><span>itens comprados</span></div>
+      <div><strong class="num">${s.reg}/${s.count}</strong><span>itens cadastrados</span></div>
       <div><strong class="num">${fmt(s.total)}</strong><span>previsto nos itens</span></div>
       <div><strong class="num ${free < 0 ? "over" : ""}">${fmt(Math.abs(free))}</strong><span class="${free < 0 ? "over" : ""}">${free < 0 ? "acima do orçamento" : "ainda livre"}</span></div>
       <div><strong class="num">${fmt(s.spent)}</strong><span>já gasto</span></div>
     </div>`;
   $("rooms").innerHTML = ROOMS.map(r=>{
     const st = stats(items.filter(i=>i.room===r.id));
-    const pct = st.count ? Math.round(st.done/st.count*100) : 0;
+    const pct = st.count ? Math.round(st.reg/st.count*100) : 0;
     return `<button class="room" type="button" data-room="${r.id}">
       ${r.icon}
       <span class="name">${r.name}</span>
-      <span class="meta"><span class="num">${st.done} de ${st.count} comprados · ${fmt(st.total)}</span>
+      <span class="meta"><span class="num">${st.reg} de ${st.count} cadastrados · ${fmt(st.total)}</span>
       <span class="bar"><i style="width:${pct}%"></i></span></span></button>`;
   }).join("");
 }
@@ -512,10 +513,10 @@ function renderDetail(){
   $("dEyebrow").textContent = `${ROOMS.indexOf(r)+1} de ${ROOMS.length} cômodos`;
   $("dTitle").textContent = r.name;
   $("roomnav").innerHTML = ROOMS.map(x=>{ const st = stats(items.filter(i=>i.room===x.id));
-    return `<button type="button" data-room="${x.id}" aria-current="${x.id===r.id}"><span>${x.name}</span><span class="num">${st.done}/${st.count}</span></button>`; }).join("");
-  $("dStats").innerHTML = `<span><b class="num">${st.done}/${st.count}</b> comprados</span>
+    return `<button type="button" data-room="${x.id}" aria-current="${x.id===r.id}"><span>${x.name}</span><span class="num">${st.reg}/${st.count}</span></button>`; }).join("");
+  $("dStats").innerHTML = `<span><b class="num">${st.reg}/${st.count}</b> cadastrados</span>
     <span>Estimado <b class="num">${fmt(st.total)}</b></span><span>Falta <b class="num">${fmt(st.left)}</b></span>`;
-  $("dBar").style.width = (st.count ? st.done/st.count*100 : 0) + "%";
+  $("dBar").style.width = (st.count ? st.reg/st.count*100 : 0) + "%";
   document.querySelectorAll("#filters .chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.f===filter)));
   const shown = all.filter(i => filter==="all" || (filter==="essencial" ? i.priority==="essencial" : i.priority!=="essencial"));
   const todo = shown.filter(i=>!i.done), done = shown.filter(i=>i.done);
