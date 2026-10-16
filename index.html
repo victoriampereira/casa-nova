@@ -250,7 +250,7 @@ input,select,textarea{font-size:16px}
       </div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 12</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 13</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -645,7 +645,7 @@ $("lists").addEventListener("submit", e=>{
     const m = raw.match(/https?:\/\/\S+/); if(!m){ if(!raw){ openShop=null; renderDetail(); } return; }
     const link = cleanLink(m[0]), shared = parseShared(raw, m[0]), title = shared.title || nameFromLink(link);
     const auto = !NO_AUTO.test(link) && shared.price == null;
-    const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title ? shortName(title) : "", fullTitle: title || "", price:shared.price, priceNote: shared.price!=null ? "preço da mensagem compartilhada" : "", photo:"", link, pending:auto, addedAt:Date.now()};
+    const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title || "", fullTitle: title || "", price:shared.price, priceNote: shared.price!=null ? "preço da mensagem compartilhada" : "", photo:"", link, pending:auto, addedAt:Date.now()};
     lastOpt[id] = opt.id;
     setOptions(id, s=>{ s.options.unshift(opt); if(!s.chosenId || !s.options.some(x=>x.id===s.chosenId && x.id!==opt.id)){ s.chosenId=opt.id; s.link=link; s.price=opt.price; } return s; });
     enrich(id, opt.id);
@@ -721,7 +721,7 @@ async function enrich(itemId, optId, manual){
   await setOptions(itemId, s=>{ const x = s.options.find(y=>y.id===optId); if (x){
       if (info.image && !x.photo) x.photo = info.image;
       if (info.title && (!x.fullTitle || x.fullTitle==="Produto")) x.fullTitle = info.title;
-      if (info.title && (!x.title || x.title==="Produto")) x.title = shortName(info.title);
+      if (info.title && (!x.title || x.title==="Produto")) x.title = info.title;
       if (info.brand && !x.brand) x.brand = info.brand;
       if (typeof info.price === "number" && info.price > 0){ x.price = info.price; x.priceNote = seen; x.pending = false; if (s.chosenId===optId) s.price = x.price; }
     } return s; });
