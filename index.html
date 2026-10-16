@@ -250,7 +250,7 @@ input,select,textarea{font-size:16px}
       </div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 9</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 10</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -434,7 +434,7 @@ function optCard(i,o){
       ${o.price!=null ? `<span class="pr num">${fmt(o.price)}</span>${o.priceNote?`<span class="pnote">${esc(o.priceNote)}</span>`:""}`
         : enriching.has(o.id) ? `<span class="pnote">Buscando foto e preço…</span>`
         : o.pending ? `<span class="pnote">Foto e preço chegam em até 1 hora · <button type="button" class="lnk" data-optedit="${o.id}">pôr preço agora</button></span>`
-        : `<span class="pnote">${NO_AUTO.test(o.link||"") ? "Essa loja não libera os dados. " : ""}<button type="button" class="lnk" data-optedit="${o.id}">Adicionar preço</button>${assets && !o.photo ? " · toque no quadro para pôr a foto" : ""}</span>`}
+        : `<span class="pnote">${NO_AUTO.test(o.link||"") ? "Essa loja não informa o preço. " : ""}<button type="button" class="lnk" data-optedit="${o.id}">Adicionar preço</button>${assets && !o.photo ? " · toque no quadro para pôr a foto" : ""}</span>`}
     </div>
     ${editing ? `<form class="optedit" data-opteditform="${o.id}" autocomplete="off">
       <label class="full">Nome<input id="oe-t-${o.id}" name="title" value="${esc(o.title)}"></label>
@@ -444,7 +444,7 @@ function optCard(i,o){
     </form>` : ""}
     <div class="acts">${chosen ? `<span class="pick">✓ Escolhido</span>` : `<button type="button" class="lnk" data-choose="${o.id}">Escolher este</button>`}
       ${editing ? "" : `<button type="button" class="lnk muted" data-optedit="${o.id}">Editar</button>`}
-      ${(!o.photo || o.price==null) && !enriching.has(o.id) && !NO_AUTO.test(o.link||"") ? `<button type="button" class="lnk muted" data-enrich="${o.id}">Buscar dados</button>` : ""}
+      ${(!o.photo || o.price==null) && !enriching.has(o.id) ? `<button type="button" class="lnk muted" data-enrich="${o.id}">Buscar dados</button>` : ""}
       <button type="button" class="lnk muted" data-optdel="${o.id}">Remover</button></div>
   </li>`;
 }
@@ -613,7 +613,7 @@ $("lists").addEventListener("submit", e=>{
     const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title || "", price:shared.price, priceNote: shared.price!=null ? "preço da mensagem compartilhada" : "", photo:"", link, pending:auto, addedAt:Date.now()};
     lastOpt[id] = opt.id;
     setOptions(id, s=>{ s.options.unshift(opt); if(!s.chosenId || !s.options.some(x=>x.id===s.chosenId && x.id!==opt.id)){ s.chosenId=opt.id; s.link=link; s.price=opt.price; } return s; });
-    if (auto) enrich(id, opt.id);
+    enrich(id, opt.id);
     return; }
   const oef = e.target.closest("[data-opteditform]");
   if (oef){ e.preventDefault();
@@ -694,7 +694,7 @@ function autoFill(){
   for (const it of items) for (const o of (it.options||[])){
     if (!o.photo && KNOWN[o.id] && !triedEnrich.has("k"+o.id)){ triedEnrich.add("k"+o.id);
       setOptions(it.id, s=>{ const x=s.options.find(y=>y.id===o.id); if(x && !x.photo) x.photo = KNOWN[o.id]; return s; }); continue; }
-    if ((!o.photo || o.price==null) && !triedEnrich.has(o.id) && fnAvailable && !NO_AUTO.test(o.link||"")) enrich(it.id, o.id);
+    if ((!o.photo || o.price==null) && !triedEnrich.has(o.id) && fnAvailable && (!NO_AUTO.test(o.link||"") ? true : !o.photo)) enrich(it.id, o.id);
   }
 }
 

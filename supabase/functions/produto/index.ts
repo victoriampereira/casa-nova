@@ -57,6 +57,29 @@ function offerPrice(offers: any): number | undefined {
   return prices.length ? Math.min(...prices) : undefined;
 }
 
+const CHROME = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
+const PREVIEW = "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)";
+
+async function get(url: string, ua: string) {
+  return await fetch(url, {
+    redirect: "follow",
+    headers: { "User-Agent": ua, "Accept": "text/html,application/xhtml+xml", "Accept-Language": "pt-BR,pt;q=0.9" },
+    signal: AbortSignal.timeout(12000),
+  });
+}
+
+// Links da Shopee (curtos ou longos) viram o endereço canônico do produto, que a Shopee
+// entrega com nome e foto para geradores de prévia de link.
+async function shopeeCanonical(url: URL): Promise<string | undefined> {
+  let u = url.toString();
+  if (/^s\.shopee\./.test(url.hostname)) {
+    const r = await fetch(u, { redirect: "manual", headers: { "User-Agent": CHROME }, signal: AbortSignal.timeout(8000) }).catch(() => null);
+    const loc = r?.headers.get("location"); if (loc) u = new URL(loc, u).toString();
+  }
+  const m = u.match(/-i\.(\d+)\.(\d+)/) || u.match(/\/(?:product|opaanlp|[^/]+)\/(\d+)\/(\d+)/);
+  return m ? `https://shopee.com.br/produto-i.${m[1]}.${m[2]}` : undefined;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   // Só aceita quem está logado no app.
@@ -72,17 +95,20 @@ Deno.serve(async (req) => {
     if (!/^https?:$/.test(target.protocol)) return json({ error: "link inválido" });
     if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.)/.test(target.hostname)) return json({ error: "link inválido" });
 
-    const res = await fetch(target.toString(), {
-      redirect: "follow",
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "pt-BR,pt;q=0.9",
-      },
-      signal: AbortSignal.timeout(12000),
-    });
-    if (!res.ok) return json({ error: `a loja respondeu ${res.status}` });
-    const html = (await res.text()).slice(0, 3_000_000);
+    let html = "";
+    const isShopee = /shopee\./i.test(target.hostname);
+    if (isShopee) {
+      const canon = await shopeeCanonical(target);
+      if (canon) { target = new URL(canon); const r = await get(canon, PREVIEW); if (r.ok) html = (await r.text()).slice(0, 3_000_000); }
+    } else {
+      const r = await get(target.toString(), CHROME);
+      if (r.ok) html = (await r.text()).slice(0, 3_000_000);
+      if (!html || /suspicious-traffic|captcha|Não é possível acessar/i.test(html)) {
+        const r2 = await get(target.toString(), PREVIEW);
+        if (r2.ok) html = (await r2.text()).slice(0, 3_000_000);
+      }
+    }
+    if (!html || /suspicious-traffic|captcha/i.test(html)) return json({ error: "a loja bloqueou a leitura" });
 
     let title: string | undefined, brand: string | undefined, price: number | undefined, image: string | undefined;
 
@@ -105,7 +131,8 @@ Deno.serve(async (req) => {
     brand ??= meta(html, "product:brand") || meta(html, "og:brand");
 
     if (image) { try { image = new URL(image, target).toString(); } catch { image = undefined; } }
-    if (title) title = title.replace(/\s*[|\-–]\s*(Magazine Luiza|Magalu|Mercado Livre|Casas Bahia|Shopee|Amazon\.com\.br).*$/i, "").trim();
+    if (title) title = title.replace(/\s*[|\-–]\s*(Magazine Luiza|Magalu|Mercado Livre|Casas Bahia|Shopee Brasil|Shopee|Amazon\.com\.br).*$/i, "").replace(/^Compre\s+/i, "").trim();
+    if (/^Shopee Brasil/i.test(title || "")) title = undefined;
 
     if (!title && !price && !image) return json({ error: "a página não mostrou os dados do produto" });
     return json({ title, brand: brand ? decode(String(brand)) : undefined, price, image });
