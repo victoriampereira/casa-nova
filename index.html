@@ -250,7 +250,7 @@ input,select,textarea{font-size:16px}
       </div>
       <div class="rooms" id="rooms"></div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 11</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 12</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -418,6 +418,23 @@ function parseShared(raw, url){
   if (title.length < 4 || /^https?:/i.test(title)) title = "";
   return {title: title.slice(0, 160), price: price && price > 0 ? price : null};
 }
+/* Nome curto para a lista: até 4 palavras, sem códigos nem complementos. */
+function shortName(full){
+  let t = String(full||"").split(/\s[|–-]\s/)[0].replace(/\s*\(.*?\)\s*/g," ").trim();
+  const stop = new Set(["para","com","de","do","da","dos","das","e","em","sem","cor","kit","-"]);
+  const out = [];
+  for (const w of t.split(/\s+/)){
+    const lw = w.toLowerCase();
+    if (/^[A-Z0-9]{5,}$/.test(w) && /\d/.test(w)) break; // código do modelo
+    if (out.length >= 3 && stop.has(lw)) break;
+    if (out.length && lw.slice(0,3) === out[out.length-1].toLowerCase().slice(0,3)) continue; // "Mesa Mesinha"
+    out.push(w);
+    if (out.length >= 4) break;
+  }
+  while (out.length > 1 && stop.has(out[out.length-1].toLowerCase())) out.pop();
+  const s = out.map((w,i)=> /\d|^[A-Z]{2,}$/.test(w) ? w : (i===0 ? w.charAt(0).toUpperCase()+w.slice(1).toLowerCase() : w.toLowerCase())).join(" ");
+  return s || full;
+}
 const lastOpt = {};
 const NO_AUTO = /shopee|mercadoli|meli\.la|mercadolibre/i;
 const safeUrl = u => /^https?:\/\//i.test(u||"") ? u : "";
@@ -448,7 +465,7 @@ function optCard(i,o){
     ${thumb}
     <div class="oinfo">
       <span class="src">${esc(o.store)}${o.brand?` · <span class="brand">${esc(o.brand)}</span>`:""}</span>
-      <span class="ttl">${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(o.title && o.title!=="Produto" ? o.title : "Ver produto na " + o.store + " ↗")}</a>` : esc(o.title||"Produto")}</span>
+      <span class="ttl">${href ? `<a href="${esc(href)}" target="_blank" rel="noopener" title="${esc(o.fullTitle||o.title||"")}">${esc(o.title && o.title!=="Produto" ? o.title : "Ver produto na " + o.store + " ↗")}</a>` : esc(o.title||"Produto")}</span>
       ${o.price!=null ? `<span class="pr num">${fmt(o.price)}</span>${o.priceNote?`<span class="pnote">${esc(o.priceNote)}</span>`:""}`
         : enriching.has(o.id) ? `<span class="pnote">Buscando foto e preço…</span>`
         : o.pending ? `<span class="pnote">Foto e preço chegam em até 1 hora · <button type="button" class="lnk" data-optedit="${o.id}">pôr preço agora</button></span>`
@@ -628,7 +645,7 @@ $("lists").addEventListener("submit", e=>{
     const m = raw.match(/https?:\/\/\S+/); if(!m){ if(!raw){ openShop=null; renderDetail(); } return; }
     const link = cleanLink(m[0]), shared = parseShared(raw, m[0]), title = shared.title || nameFromLink(link);
     const auto = !NO_AUTO.test(link) && shared.price == null;
-    const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title || "", price:shared.price, priceNote: shared.price!=null ? "preço da mensagem compartilhada" : "", photo:"", link, pending:auto, addedAt:Date.now()};
+    const opt = {id:"o"+Date.now().toString(36), store:storeFromLink(link), brand:brandFrom(title), title: title ? shortName(title) : "", fullTitle: title || "", price:shared.price, priceNote: shared.price!=null ? "preço da mensagem compartilhada" : "", photo:"", link, pending:auto, addedAt:Date.now()};
     lastOpt[id] = opt.id;
     setOptions(id, s=>{ s.options.unshift(opt); if(!s.chosenId || !s.options.some(x=>x.id===s.chosenId && x.id!==opt.id)){ s.chosenId=opt.id; s.link=link; s.price=opt.price; } return s; });
     enrich(id, opt.id);
@@ -703,7 +720,8 @@ async function enrich(itemId, optId, manual){
   const d = new Date(), seen = `preço visto em ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
   await setOptions(itemId, s=>{ const x = s.options.find(y=>y.id===optId); if (x){
       if (info.image && !x.photo) x.photo = info.image;
-      if (info.title && (!x.title || x.title==="Produto" || manual)) x.title = info.title;
+      if (info.title && (!x.fullTitle || x.fullTitle==="Produto")) x.fullTitle = info.title;
+      if (info.title && (!x.title || x.title==="Produto")) x.title = shortName(info.title);
       if (info.brand && !x.brand) x.brand = info.brand;
       if (typeof info.price === "number" && info.price > 0){ x.price = info.price; x.priceNote = seen; x.pending = false; if (s.chosenId===optId) s.price = x.price; }
     } return s; });
