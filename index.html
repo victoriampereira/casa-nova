@@ -444,6 +444,10 @@ const PH = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="
 function shopPanel(i){
   const ess = i.priority === "essencial";
   return `<div class="shop">
+    <form class="optform" data-renameform="${i.id}" autocomplete="off">
+      <input id="rn-${i.id}" name="name" value="${esc(i.name)}" maxlength="80" aria-label="Nome do item" placeholder="Nome do item">
+      <button class="btn ghost" type="submit">Renomear</button>
+    </form>
     <form class="optform" data-optform="${i.id}" autocomplete="off">
       <input id="o-link-${i.id}" name="link" type="url" inputmode="url" placeholder="Cole o link ou a mensagem de Compartilhar" aria-label="Link do produto">
       <button class="btn" type="submit">Adicionar</button>
@@ -640,6 +644,11 @@ $("lists").addEventListener("change", async e=>{
 });
 
 $("lists").addEventListener("submit", e=>{
+  const rf = e.target.closest("[data-renameform]");
+  if (rf){ e.preventDefault();
+    const id = rf.dataset.renameform, name = String(new FormData(rf).get("name")||"").trim();
+    const it = items.find(i=>i.id===id); if(!it || !name || name===it.name) return;
+    write(()=>col.doc(id).update({name}), ()=>{ it.name = name; }); return; }
   const of = e.target.closest("[data-optform]");
   if (of){ e.preventDefault();
     const id = of.dataset.optform, raw = String(new FormData(of).get("link")||"").trim();
