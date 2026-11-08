@@ -190,7 +190,51 @@ input,select,textarea{font-size:16px}
 .hometop{display:flex;flex-direction:column;gap:22px}
 
 /* Computador: paisagem, ocupa a tela toda */
+/* Apartamentos */
+.hometabs{display:flex;gap:6px;flex-wrap:wrap}
+.hometabs button{all:unset;cursor:pointer;font-size:.88rem;padding:8px 16px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.hometabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.hometabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.apane{display:flex;flex-direction:column;gap:16px}
+form.aptadd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:8px}
+form.aptadd input{border:0;background:transparent;padding:10px 8px;min-width:0;font-size:16px}
+form.aptadd input:focus{outline:none;background:var(--accent-soft);border-radius:3px}
+.aptlist{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.apt{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.apt.descartado{opacity:.55}
+.apt .aph{aspect-ratio:16/9;max-width:100%;background:var(--accent-soft);display:grid;place-items:center;position:relative;overflow:hidden}
+.apt .aph img{width:100%;height:100%;object-fit:cover;display:block}
+.apt .aph svg{width:34px;height:34px;fill:none;stroke:var(--muted);stroke-width:1.3}
+.apt .aph .site{position:absolute;left:10px;bottom:10px;background:rgba(29,30,27,.72);color:#fff;font-size:.7rem;font-weight:600;letter-spacing:.04em;padding:4px 8px;border-radius:3px}
+.apt .ain{padding:14px 16px 12px;display:flex;flex-direction:column;gap:8px}
+.apt .arow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.apt .where{font-weight:600;font-size:.98rem;min-width:0;overflow-wrap:anywhere}
+.apt .addr{font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
+.apt .tot{font-family:var(--display);font-size:1.75rem;line-height:1}
+.apt .tot small{font-family:var(--body);font-size:.75rem;color:var(--muted);margin-left:4px}
+.apt .brk{font-size:.8rem;color:var(--muted)}
+.apt .chips{display:flex;gap:6px;flex-wrap:wrap}
+.apt .chip2{font-size:.74rem;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.apt .anote{font-size:.85rem;background:var(--bg);border-radius:3px;padding:8px 10px;overflow-wrap:anywhere}
+.apt .aacts{display:flex;gap:16px;align-items:center;border-top:1px solid var(--line);padding:10px 16px;flex-wrap:wrap}
+.apt .aacts a{color:var(--accent);font-size:.8rem;font-weight:600;text-decoration:none}
+.stsel{appearance:none;border:0;font:inherit;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 22px 5px 9px;border-radius:3px;cursor:pointer;
+  background-repeat:no-repeat;background-position:right 7px center;background-size:8px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5'/%3E%3C/svg%3E")}
+.stsel.quero{background-color:#e9efe0;color:#4d5a3b}
+.stsel.visita{background-color:#f6ecd9;color:#8a5f17}
+.stsel.visitado{background-color:#e2e9ef;color:#3d5568}
+.stsel.proposta{background-color:#e9e1f0;color:#5d4472}
+.stsel.descartado{background-color:#f3e3df;color:#9a3b2e}
+form.aptedit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 16px 14px}
+form.aptedit label{display:flex;flex-direction:column;gap:4px;font-size:.74rem;color:var(--muted)}
+form.aptedit .full{grid-column:1/-1}
+form.aptedit input,form.aptedit textarea{border:1px solid var(--line);background:var(--bg);border-radius:3px;padding:8px 10px;min-width:0;font-size:16px;color:var(--ink)}
+form.aptedit textarea{min-height:60px;resize:vertical}
+form.aptedit .acts2{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.aload{font-size:.85rem;color:var(--muted);padding:16px;text-align:center}
+
 @media (min-width:1024px){
+  .aptlist{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));align-items:start}
   .wrap{max-width:1560px;padding-block:40px 64px}
   .hometop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:48px;align-items:end}
   .hometop .summary{border-top:0;padding-top:0}
@@ -248,9 +292,21 @@ input,select,textarea{font-size:16px}
         </div>
         <div class="summary" id="summary"></div>
       </div>
+      <div class="hometabs" role="tablist" id="hometabs">
+        <button type="button" role="tab" data-hometab="comodos" aria-selected="true">Cômodos</button>
+        <button type="button" role="tab" data-hometab="aptos" aria-selected="false">Apartamentos · <span id="aptCount" class="num">0</span></button>
+      </div>
       <div class="rooms" id="rooms"></div>
+      <div class="apane" id="aptos" hidden>
+        <form class="aptadd" id="aptAdd" autocomplete="off">
+          <input id="aptLink" type="url" inputmode="url" placeholder="Cole o link do anúncio (ZAP, Viva Real, OLX…)" aria-label="Link do anúncio">
+          <button class="btn" type="submit">Adicionar</button>
+        </form>
+        <div class="filters" id="aptFilters"></div>
+        <div class="aptlist" id="aptList"></div>
+      </div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 15</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 16</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
@@ -297,6 +353,8 @@ const $ = id => document.getElementById(id);
 
 let items = [];        // [{id, ...data}]
 let db = null, col = null, budget = 15000, editingBudget = false;
+let apts = [], homeTab = "comodos", openApt = null, aptFilter = "ativos";
+try { homeTab = localStorage.getItem("casa-nova-aba") || "comodos"; } catch(e){}
 let current = null, filter = "all", openEdit = null, openShop = null, openOpt = null, assets = null;
 
 function stats(list){
@@ -308,6 +366,7 @@ function stats(list){
 }
 
 function renderHome(){
+  renderAptos();
   const s = stats(items);
   const free = budget - s.total, pct = budget > 0 ? Math.min(100, s.total / budget * 100) : 0;
   $("summary").innerHTML = `
@@ -754,6 +813,8 @@ async function reload(){
       : "Não foi possível carregar a lista. Verifique a internet.";
     render(); return; }
   items = data.map(fromRow);
+  const ap = await sb.from("apartments").select("*").order("created_at", {ascending:false});
+  if (!ap.error) apts = ap.data || [];
   const st = await sb.from("settings").select("budget").maybeSingle();
   if (!st.error && st.data && st.data.budget != null) budget = Number(st.data.budget);
   if (!items.length && await importSeed()) return reload();
@@ -781,6 +842,7 @@ function subscribe(){
   channel = sb.channel("items-" + session.user.id)
     .on("postgres_changes", {event:"*", schema:"public", table:"items", filter:`user_id=eq.${session.user.id}`}, reloadSoon)
     .on("postgres_changes", {event:"*", schema:"public", table:"settings", filter:`user_id=eq.${session.user.id}`}, reloadSoon)
+    .on("postgres_changes", {event:"*", schema:"public", table:"apartments", filter:`user_id=eq.${session.user.id}`}, reloadSoon)
     .subscribe();
 }
 
@@ -791,6 +853,122 @@ async function setSession(s){
   $("who").textContent = session.user.email || "";
   if (changed){ render(); await reload(); subscribe(); }
 }
+
+/* ---------- apartamentos ---------- */
+const STATUS = [["quero","Quero visitar"],["visita","Visita marcada"],["visitado","Visitado"],["proposta","Proposta"],["descartado","Descartado"]];
+const stOrder = Object.fromEntries(STATUS.map((x,i)=>[x[0],i]));
+const PHOTO_PH = '<svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-5h4v5"/></svg>';
+const fmtR = v => Number.isInteger(Math.round(v*100)/100) ? "R$ " + new Intl.NumberFormat("pt-BR").format(v) : fmt(v);
+const aptTotal = a => [a.rent,a.condo,a.iptu].reduce((t,v)=>t+(Number(v)||0),0);
+const int = v => (v==null||v==="") ? "—" : new Intl.NumberFormat("pt-BR").format(Number(v));
+function siteFrom(link){ try{ const h=new URL(link).hostname.replace(/^www\./,""); const m={zapimoveis:"ZAP Imóveis",vivareal:"Viva Real",olx:"OLX",quintoandar:"QuintoAndar",imovelweb:"Imovelweb",chavesnamao:"Chaves na Mão",loft:"Loft"};
+  const k=Object.keys(m).find(k=>h.includes(k)); return k?m[k]:h.split(".")[0].replace(/^\w/,c=>c.toUpperCase()); }catch(e){ return "Anúncio"; } }
+
+function aptCard(a){
+  const tot = aptTotal(a), open = openApt === a.id, href = safeUrl(a.link);
+  const perM2 = a.area && tot ? Math.round(tot / a.area) : null;
+  const chips = [a.area?`${int(a.area)} m²`:"", a.bedrooms?`${a.bedrooms} quarto${a.bedrooms>1?"s":""}`:"", a.bathrooms?`${a.bathrooms} banheiro${a.bathrooms>1?"s":""}`:"",
+    a.parking?`${a.parking} vaga${a.parking>1?"s":""}`:"", perM2?`R$ ${int(perM2)}/m²`:""].filter(Boolean);
+  const where = a.neighborhood || a.title || "Apartamento";
+  const brk = [a.rent!=null?`Aluguel ${int(a.rent)}`:"", a.condo!=null?`Condomínio ${int(a.condo)}`:"", a.iptu!=null?`IPTU ${int(a.iptu)}`:""].filter(Boolean).join(" · ");
+  return `<article class="apt ${a.status}" data-apt="${a.id}">
+    <div class="aph">${a.photo ? `<img src="${esc(a.photo)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : PHOTO_PH}<span class="site">${esc(a.site || siteFrom(a.link))}</span></div>
+    <div class="ain">
+      <div class="arow"><span class="where">${esc(where)}</span>
+        <select class="stsel ${a.status}" data-aptstatus="${a.id}" aria-label="Status">${STATUS.map(([k,l])=>`<option value="${k}" ${a.status===k?"selected":""}>${l}</option>`).join("")}</select></div>
+      ${a.address ? `<span class="addr">${esc(a.address)}</span>` : ""}
+      ${a.pending ? `<span class="brk">Lendo o anúncio…</span>` :
+        tot ? `<span class="tot num">${fmtR(tot)}<small>/mês</small></span>${brk?`<span class="brk num">${brk}</span>`:""}`
+            : `<span class="brk">Valores não encontrados · <button type="button" class="lnk" data-aptedit="${a.id}">preencher</button></span>`}
+      ${a.status==="visita" && a.visit_at ? `<span class="brk" style="color:#8a5f17;font-weight:600">Visita: ${esc(a.visit_at)}</span>` : ""}
+      ${chips.length ? `<div class="chips">${chips.map(c=>`<span class="chip2 num">${c}</span>`).join("")}</div>` : ""}
+      ${a.note && !open ? `<p class="anote" style="margin:0">${esc(a.note)}</p>` : ""}
+    </div>
+    ${open ? `<form class="aptedit" data-aptform="${a.id}" autocomplete="off">
+      <label>Aluguel<input name="rent" inputmode="decimal" class="num" value="${a.rent??""}"></label>
+      <label>Condomínio<input name="condo" inputmode="decimal" class="num" value="${a.condo??""}"></label>
+      <label>IPTU (mês)<input name="iptu" inputmode="decimal" class="num" value="${a.iptu??""}"></label>
+      <label>Área (m²)<input name="area" inputmode="numeric" class="num" value="${a.area??""}"></label>
+      <label>Quartos<input name="bedrooms" inputmode="numeric" class="num" value="${a.bedrooms??""}"></label>
+      <label>Vagas<input name="parking" inputmode="numeric" class="num" value="${a.parking??""}"></label>
+      <label class="full">Bairro<input name="neighborhood" value="${esc(a.neighborhood)}"></label>
+      <label class="full">Data da visita<input name="visit_at" placeholder="ex.: sábado, 10h" value="${esc(a.visit_at)}"></label>
+      <label class="full">Anotações<textarea name="note" placeholder="O que achou, pontos a conferir…">${esc(a.note)}</textarea></label>
+      <div class="acts2"><button class="btn" type="submit">Salvar</button><button class="btn ghost" type="button" data-aptedit="${a.id}">Fechar</button></div>
+    </form>` : ""}
+    <div class="aacts">${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">Abrir anúncio ↗</a>` : ""}
+      ${open ? "" : `<button type="button" class="lnk muted" data-aptedit="${a.id}">Editar</button>`}
+      ${!a.pending && (!a.photo || !aptTotal(a)) ? `<button type="button" class="lnk muted" data-aptread="${a.id}">Ler de novo</button>` : ""}
+      <button type="button" class="lnk muted" style="margin-left:auto" data-aptdel="${a.id}">Remover</button></div>
+  </article>`;
+}
+
+function renderAptos(){
+  const ativos = apts.filter(a=>a.status!=="descartado");
+  $("aptCount").textContent = ativos.length;
+  document.querySelectorAll("[data-hometab]").forEach(b=>b.setAttribute("aria-selected", String(b.dataset.hometab===homeTab)));
+  const isA = homeTab === "aptos";
+  $("rooms").hidden = isA; $("aptos").hidden = !isA; $("summary").hidden = isA; $("status").hidden = isA;
+  if (!isA) return;
+  const counts = Object.fromEntries(STATUS.map(([k])=>[k, apts.filter(a=>a.status===k).length]));
+  const fl = [["ativos","Todos"], ...STATUS.filter(([k])=>counts[k]).map(([k,l])=>[k,`${l} · ${counts[k]}`])];
+  if (!fl.some(f=>f[0]===aptFilter)) aptFilter = "ativos";
+  $("aptFilters").innerHTML = fl.length > 2 ? fl.map(([k,l])=>`<button class="chip" type="button" data-aptfilter="${k}" aria-pressed="${aptFilter===k}">${l}</button>`).join("") : "";
+  const list = (aptFilter==="ativos" ? apts.slice().sort((x,y)=>(x.status==="descartado")-(y.status==="descartado") || stOrder[x.status]-stOrder[y.status] || (aptTotal(x)||1e9)-(aptTotal(y)||1e9)) : apts.filter(a=>a.status===aptFilter));
+  $("aptList").innerHTML = list.length ? list.map(aptCard).join("")
+    : `<p class="empty-state">Nenhum apartamento ainda. Cole acima o link de um anúncio de aluguel: o app traz foto, valores, metragem e quartos.</p>`;
+}
+
+async function aptUpdate(id, patch){
+  const a = apts.find(x=>x.id===id); if (a) Object.assign(a, patch); renderAptos();
+  const {error} = await sb.from("apartments").update(patch).eq("id", id);
+  if (error){ console.error(error); $("status").textContent = "Não foi possível salvar. Verifique a internet."; reload(); }
+}
+async function aptRead(id){
+  const a = apts.find(x=>x.id===id); if (!a) return;
+  if (!a.pending) aptUpdate(id, {pending:true});
+  let info = null;
+  try { const {data, error} = await sb.functions.invoke("imovel", {body:{url:a.link}}); if (error) throw error; info = data; }
+  catch(e){ console.warn("imovel:", e); }
+  const patch = {pending:false};
+  if (info && !info.error){
+    for (const k of ["site","title","address","neighborhood","photo"]) if (info[k] && !a[k]) patch[k] = info[k];
+    for (const k of ["rent","condo","iptu","area","bedrooms","bathrooms","parking"]) if (info[k]!=null && a[k]==null) patch[k] = info[k];
+  } else { openApt = id; }
+  await aptUpdate(id, patch);
+  if (!info || info.error) $("status").textContent = "Não consegui ler esse anúncio. Preencha os valores em Editar.";
+}
+
+$("hometabs").addEventListener("click", e=>{ const b=e.target.closest("[data-hometab]"); if(!b) return;
+  homeTab = b.dataset.hometab; try{ localStorage.setItem("casa-nova-aba", homeTab); }catch(e){} renderHome(); });
+$("aptFilters").addEventListener("click", e=>{ const b=e.target.closest("[data-aptfilter]"); if(!b) return; aptFilter=b.dataset.aptfilter; renderAptos(); });
+$("aptAdd").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const m = $("aptLink").value.match(/https?:\/\/\S+/); if (!m){ $("aptLink").focus(); return; }
+  let link = m[0]; try{ const u=new URL(link); u.hash=""; ["source","utm_source","utm_medium","utm_campaign","utm_content","utm_term","gclid","fbclid"].forEach(p=>u.searchParams.delete(p)); link=u.toString().replace(/\?$/,""); }catch(e){}
+  if (apts.some(a=>a.link===link)){ $("status").textContent = "Esse anúncio já está na lista."; $("aptLink").value=""; return; }
+  $("aptLink").value = "";
+  const {data, error} = await sb.from("apartments").insert({link, site: siteFrom(link), pending:true}).select().single();
+  if (error){ console.error(error); $("status").textContent = "Não foi possível salvar. Verifique a internet."; return; }
+  apts.unshift(data); aptFilter = "ativos"; renderAptos(); aptRead(data.id);
+});
+$("aptList").addEventListener("change", e=>{ const s=e.target.closest("[data-aptstatus]"); if(!s) return;
+  const id = s.dataset.aptstatus; if (s.value==="visita") openApt = id; aptUpdate(id, {status:s.value}); });
+$("aptList").addEventListener("click", e=>{
+  const ed = e.target.closest("[data-aptedit]"); if (ed){ openApt = openApt===ed.dataset.aptedit ? null : ed.dataset.aptedit; renderAptos(); return; }
+  const rd = e.target.closest("[data-aptread]"); if (rd){ aptRead(rd.dataset.aptread); return; }
+  const dl = e.target.closest("[data-aptdel]"); if (dl){
+    if (dl.dataset.confirm!=="1"){ dl.dataset.confirm="1"; dl.textContent="Confirmar remoção"; return; }
+    const id = dl.dataset.aptdel; apts = apts.filter(a=>a.id!==id); renderAptos();
+    sb.from("apartments").delete().eq("id", id).then(({error})=>{ if(error){ console.error(error); reload(); } }); }
+});
+$("aptList").addEventListener("submit", e=>{
+  const f = e.target.closest("[data-aptform]"); if (!f) return; e.preventDefault();
+  const fd = new FormData(f), num = k => { const v = parsePrice(fd.get(k)); return v==null ? null : v; }, whole = k => { const v = parseInt(String(fd.get(k)||"").replace(/\D/g,""),10); return isFinite(v) ? v : null; };
+  openApt = null;
+  aptUpdate(f.dataset.aptform, {rent:num("rent"), condo:num("condo"), iptu:num("iptu"), area:num("area"), bedrooms:whole("bedrooms"), parking:whole("parking"),
+    neighborhood:String(fd.get("neighborhood")||"").trim(), visit_at:String(fd.get("visit_at")||"").trim(), note:String(fd.get("note")||"").trim()});
+});
 
 /* ---------- orçamento ---------- */
 $("summary").addEventListener("click", e=>{
@@ -836,6 +1014,7 @@ $("btnLogout").addEventListener("click", async ()=>{ await sb.auth.signOut(); se
 /* ---------- boot ---------- */
 const start = location.hash.slice(1);
 current = ROOMS.some(r=>r.id===start) ? start : null;
+if (start === "apartamentos") homeTab = "aptos";
 sb.auth.onAuthStateChange((_ev, s)=>{ setSession(s); });
 sb.auth.getSession().then(({data})=>{ setSession(data.session); if (!data.session) render(); });
 document.addEventListener("visibilitychange", ()=>{ if (!document.hidden) reloadSoon(); });

@@ -62,3 +62,17 @@ create policy "config: dono altera" on public.settings for update using (auth.ui
 do $$ begin
   alter publication supabase_realtime add table public.settings;
 exception when duplicate_object then null; end $$;
+
+-- Apartamentos para alugar
+create table if not exists public.apartments (
+  id text primary key default gen_random_uuid()::text,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  link text not null, site text not null default '', title text not null default '',
+  address text not null default '', neighborhood text not null default '',
+  rent numeric, condo numeric, iptu numeric, area numeric, bedrooms int, bathrooms int, parking int,
+  photo text not null default '', status text not null default 'quero', visit_at text not null default '',
+  note text not null default '', pending boolean not null default true,
+  created_at bigint not null default (extract(epoch from now()) * 1000)::bigint
+);
+alter table public.apartments enable row level security;
+-- (políticas "dono le/cria/altera/apaga" iguais às de items, e a tabela no supabase_realtime)
