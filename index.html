@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Casa Nova</title>
-<meta name="theme-color" content="#f7f3e9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1c2638" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Casa Nova">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
-<link rel="icon" type="image/png" href="favicon.png?v=4">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=5">
+<link rel="icon" type="image/png" href="favicon.png?v=5">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600&display=swap">
@@ -21,17 +21,17 @@ html{-webkit-text-size-adjust:100%}
 img{max-width:100%}
 /* Layout: a quiet floor-plan index of four rooms; tap one to open its shopping list. */
 :root{
-  --bg:#f7f3e9; --surface:#fffdf8; --ink:#1c2433; --muted:#737268; --line:#e6dfcf;
-  --accent:#26344a; --accent-soft:#f1e3b4; --done:#b2ad9d; --danger:#9a3b2e;
+  --bg:#ffffff; --surface:#ffffff; --ink:#1c2433; --muted:#6b7180; --line:#e4e7ec;
+  --accent:#26344a; --accent-soft:#eef1f5; --done:#aab0bb; --danger:#9a3b2e;
   --display:"Marcellus", "Cormorant Garamond", Georgia, serif;
   --body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#1c2638; --surface:#26344a; --ink:#f5efe2; --muted:#a9b1c2; --line:#364561;
-  --accent:#f1e3b4; --accent-soft:#33425c; --done:#6f7a90; --danger:#f0a493; color-scheme:dark}}
+  --accent:#ffffff; --accent-soft:#33425c; --done:#6f7a90; --danger:#f0a493; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#1c2638; --surface:#26344a; --ink:#f5efe2; --muted:#a9b1c2; --line:#364561;
-  --accent:#f1e3b4; --accent-soft:#33425c; --done:#6f7a90; --danger:#f0a493; color-scheme:dark}
+  --accent:#ffffff; --accent-soft:#33425c; --done:#6f7a90; --danger:#f0a493; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{margin:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-tap-highlight-color:transparent;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
@@ -220,7 +220,7 @@ form.aptadd input:focus{outline:none;background:var(--accent-soft);border-radius
 .apt .aacts a{color:var(--accent);font-size:.8rem;font-weight:600;text-decoration:none}
 .stsel{appearance:none;border:0;font:inherit;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 22px 5px 9px;border-radius:3px;cursor:pointer;
   background-repeat:no-repeat;background-position:right 7px center;background-size:8px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5'/%3E%3C/svg%3E")}
-.stsel.quero{background-color:#f1e3b4;color:#26344a}
+.stsel.quero{background-color:#e4e9f1;color:#26344a}
 .stsel.visita{background-color:#f6ecd9;color:#8a5f17}
 .stsel.visitado{background-color:#e2e9ef;color:#3d5568}
 .stsel.proposta{background-color:#e9e1f0;color:#5d4472}
@@ -306,7 +306,7 @@ form.aptedit .acts2{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
         <div class="aptlist" id="aptList"></div>
       </div>
       <p class="note" id="status">Carregando sua lista…</p>
-      <div class="foot"><span><span id="who"></span> · versão 17</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
+      <div class="foot"><span><span id="who"></span> · versão 18</span><button class="lnk muted" type="button" id="btnLogout">Sair</button></div>
     </div>
   </section>
 
